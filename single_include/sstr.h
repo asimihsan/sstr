@@ -44,6 +44,24 @@ extern "C" {
 #endif
 
 /**
+ * Format string validation control.
+ * When enabled, format strings will be validated to ensure only 
+ * allowed specifiers are used.
+ */
+#ifndef SSTR_VALIDATE_FORMAT
+#define SSTR_VALIDATE_FORMAT 1  /* Enable by default */
+#endif
+
+/**
+ * Define which format specifiers are allowed when validation is enabled.
+ * Default allows: d,i,u,x,X,s,c and % (literal percent)
+ * Notably excludes: f,e,g,p (floating point and pointers)
+ */
+#ifndef SSTR_ALLOWED_SPECIFIERS
+#define SSTR_ALLOWED_SPECIFIERS "diuxXsc%"
+#endif
+
+/**
  * Define format specifiers to handle.
  */
 #ifndef SSTR_ENABLE_FLOAT_FORMAT
@@ -267,6 +285,85 @@ static inline int safe_vsnprintf(char *str, size_t size, const char *format, va_
     return result;
 }
 
+#if SSTR_VALIDATE_FORMAT
+/* Validates that a format string only uses allowed format specifiers */
+static inline int validate_format_string(const char *fmt) {
+    if (fmt == NULL) {
+        return SSTR_ERROR_NULL;
+    }
+
+    const char *ptr = fmt;
+    
+    while (*ptr) {
+        /* Find the next '%' character */
+        if (*ptr != '%') {
+            ptr++;
+            continue;
+        }
+        
+        /* Process a % character */
+        ptr++; /* Move past '%' */
+        
+        /* Handle %% escape sequence */
+        if (*ptr == '%') {
+            ptr++;
+            continue;
+        }
+        
+        /* If we reached the end of the string after a %, that's invalid */
+        if (*ptr == '\0') {
+            return SSTR_ERROR_FORMAT;
+        }
+        
+        /* Skip flags: "-+0 #" */
+        while (*ptr == '-' || *ptr == '+' || *ptr == '0' || 
+               *ptr == ' ' || *ptr == '#') {
+            ptr++;
+        }
+        
+        /* Skip width: digits */
+        while (isdigit((unsigned char)*ptr)) {
+            ptr++;
+        }
+        
+        /* Skip precision: .digits */
+        if (*ptr == '.') {
+            ptr++;
+            while (isdigit((unsigned char)*ptr)) {
+                ptr++;
+            }
+        }
+        
+        /* Skip length modifiers: h, l, ll, z, j, t, L */
+        if (*ptr == 'h' || *ptr == 'l' || *ptr == 'j' || 
+            *ptr == 'z' || *ptr == 't' || *ptr == 'L') {
+            /* Handle double character modifiers like 'hh', 'll' */
+            if ((*ptr == 'h' && *(ptr+1) == 'h') || 
+                (*ptr == 'l' && *(ptr+1) == 'l')) {
+                ptr += 2;
+            } else {
+                ptr++;
+            }
+        }
+        
+        /* Check if the specifier is allowed */
+        if (*ptr == '\0') {
+            return SSTR_ERROR_FORMAT; /* Incomplete format specifier */
+        }
+        
+        /* Verify the final conversion specifier */
+        if (strchr(SSTR_ALLOWED_SPECIFIERS, *ptr) == NULL) {
+            return SSTR_ERROR_FORMAT;
+        }
+        
+        /* Move past this format specifier */
+        ptr++;
+    }
+    
+    return SSTR_SUCCESS;
+}
+#endif
+
 /**
  * Format a string into an SStr with va_list
  * 
@@ -279,6 +376,14 @@ static inline int sstr_vformat(SStr *dest, const char *fmt, va_list args) {
     if (dest == NULL || dest->data == NULL || fmt == NULL) {
         return SSTR_ERROR_NULL;
     }
+    
+#if SSTR_VALIDATE_FORMAT
+    /* Validate format string - only allow approved specifiers */
+    int validation_result = validate_format_string(fmt);
+    if (validation_result != SSTR_SUCCESS) {
+        return validation_result;
+    }
+#endif
     
     va_list args_copy;
     va_copy(args_copy, args);

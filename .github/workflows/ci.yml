@@ -22,8 +22,25 @@ jobs:
       - name: Build
         run: make all
 
-      - name: Run tests
+      - name: Run standard tests
         run: make check
+        
+      - name: Test with format validation enabled (default)
+        run: make test_validation
+
+      - name: Test with format validation disabled
+        run: |
+          make clean
+          make NO_FORMAT_VALIDATION=1
+          make test_validation NO_FORMAT_VALIDATION=1
+          ./test_validation
+          
+      - name: Test with custom allowed specifiers
+        run: |
+          make clean
+          make ALLOWED_SPECIFIERS="ds"
+          make test_validation
+          ./test_validation
 
       - name: Check code formatting
         run: make format-check
@@ -59,5 +76,15 @@ jobs:
       - name: Build
         run: make all
         
-      - name: Run tests
+      - name: Run standard tests
         run: make check
+        
+      - name: Test with format validation enabled (default)
+        run: make test_validation
+
+      - name: Test with format validation disabled
+        run: |
+          make clean
+          make NO_FORMAT_VALIDATION=1
+          make test_validation NO_FORMAT_VALIDATION=1
+          ./test_validation

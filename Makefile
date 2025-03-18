@@ -2,6 +2,18 @@ CC ?= gcc
 CFLAGS = -Wall -Wextra -Werror -pedantic -std=c99 -DSSTR_DEFAULT_POLICY=SSTR_ERROR
 INCLUDES = -Iinclude
 
+# Format validation
+ifdef NO_FORMAT_VALIDATION
+    CFLAGS += -DSSTR_VALIDATE_FORMAT=0
+else
+    CFLAGS += -DSSTR_VALIDATE_FORMAT=1
+endif
+
+# Customize allowed format specifiers
+ifdef ALLOWED_SPECIFIERS
+    CFLAGS += -DSSTR_ALLOWED_SPECIFIERS=\"$(ALLOWED_SPECIFIERS)\"
+endif
+
 # Debug build
 ifdef DEBUG
     CFLAGS += -g -O0 -DDEBUG
@@ -53,13 +65,17 @@ tests: test_runner
 test_runner: $(TEST_OBJS) $(STATIC_LIB)
 	$(CC) $(CFLAGS) $(TEST_OBJS) -L. -lsstr -o $@
 
+# Validation test
+test_validation: tests/test_validation.c $(STATIC_LIB)
+	$(CC) $(CFLAGS) $(INCLUDES) $< -L. -lsstr -o $@
+
 # Run tests
 check: test_runner
 	./test_runner
 
 # Clean build files
 clean:
-	rm -f $(LIB_OBJS) $(TEST_OBJS) $(EXAMPLE_OBJS) $(STATIC_LIB) test_runner $(EXAMPLES)
+	rm -f $(LIB_OBJS) $(TEST_OBJS) $(EXAMPLE_OBJS) $(STATIC_LIB) test_runner test_validation $(EXAMPLES)
 
 # Install
 PREFIX ?= /usr/local
@@ -99,7 +115,22 @@ valgrind-docker:
 	docker build -t sstr-valgrind .
 	docker run --rm sstr-valgrind
 
-# CI target that runs all checks
-ci: all tests check format-check copyright-check valgrind-docker
+# Test with different format validation configurations
+validation-tests: test_validation
+	@echo "Testing with format validation enabled (default)..."
+	./test_validation
+	@echo "\nTesting with format validation disabled..."
+	$(MAKE) clean
+	$(MAKE) NO_FORMAT_VALIDATION=1
+	$(MAKE) test_validation NO_FORMAT_VALIDATION=1
+	./test_validation
+	@echo "\nTesting with custom allowed specifiers..."
+	$(MAKE) clean
+	$(MAKE) ALLOWED_SPECIFIERS="ds"
+	$(MAKE) test_validation
+	./test_validation
 
-.PHONY: all clean check examples tests single_include install uninstall copyright copyright-check format format-check valgrind valgrind-docker ci
+# CI target that runs all checks
+ci: all tests check format-check copyright-check valgrind-docker validation-tests
+
+.PHONY: all clean check examples tests single_include install uninstall copyright copyright-check format format-check valgrind valgrind-docker validation-tests test_validation ci

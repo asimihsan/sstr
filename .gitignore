@@ -6,6 +6,7 @@ examples/basic_usage
 examples/formatting
 .devbox
 .idea
+test_validation
 
 CMakeLists.txt.user
 CMakeCache.txt

@@ -37,6 +37,24 @@
 #endif
 
 /**
+ * Format string validation control.
+ * When enabled, format strings will be validated to ensure only 
+ * allowed specifiers are used.
+ */
+#ifndef SSTR_VALIDATE_FORMAT
+#define SSTR_VALIDATE_FORMAT 1  /* Enable by default */
+#endif
+
+/**
+ * Define which format specifiers are allowed when validation is enabled.
+ * Default allows: d,i,u,x,X,s,c and % (literal percent)
+ * Notably excludes: f,e,g,p (floating point and pointers)
+ */
+#ifndef SSTR_ALLOWED_SPECIFIERS
+#define SSTR_ALLOWED_SPECIFIERS "diuxXsc%"
+#endif
+
+/**
  * Define format specifiers to handle.
  */
 #ifndef SSTR_ENABLE_FLOAT_FORMAT

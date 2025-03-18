@@ -4,6 +4,8 @@ project(sstr VERSION 0.1.0 LANGUAGES C)
 # Options
 option(SSTR_BUILD_TESTS "Build tests" ON)
 option(SSTR_BUILD_EXAMPLES "Build examples" ON)
+option(SSTR_VALIDATE_FORMAT "Enable format string validation" ON)
+set(SSTR_ALLOWED_SPECIFIERS "diuxXsc%" CACHE STRING "Allowed format specifiers")
 
 # Set C standard
 set(CMAKE_C_STANDARD 99)
@@ -16,6 +18,14 @@ endif()
 
 # Default configuration
 add_compile_definitions(SSTR_DEFAULT_POLICY=SSTR_ERROR)
+
+# Configure format validation
+if(SSTR_VALIDATE_FORMAT)
+    add_compile_definitions(SSTR_VALIDATE_FORMAT=1)
+    add_compile_definitions(SSTR_ALLOWED_SPECIFIERS="${SSTR_ALLOWED_SPECIFIERS}")
+else()
+    add_compile_definitions(SSTR_VALIDATE_FORMAT=0)
+endif()
 
 # Include directories
 include_directories(include)

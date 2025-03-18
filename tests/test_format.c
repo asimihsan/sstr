@@ -139,6 +139,64 @@ static int test_format_complex(void)
     return 1;
 }
 
+static int test_format_validation(void)
+{
+    char buffer[128];
+    SStr str;
+    sstr_init(&str, buffer, sizeof(buffer));
+    int result;
+
+#if SSTR_VALIDATE_FORMAT
+    /* Test disallowed format specifiers */
+    result = sstr_format(&str, "Float: %f", 3.14);
+    TEST_ASSERT(result == SSTR_ERROR_FORMAT, "Float format should be rejected");
+    
+    result = sstr_format(&str, "Pointer: %p", &str);
+    TEST_ASSERT(result == SSTR_ERROR_FORMAT, "Pointer format should be rejected");
+    
+    result = sstr_format(&str, "Scientific: %e", 1.23e-4);
+    TEST_ASSERT(result == SSTR_ERROR_FORMAT, "Scientific format should be rejected");
+    
+    result = sstr_format(&str, "Generic float: %g", 0.0001);
+    TEST_ASSERT(result == SSTR_ERROR_FORMAT, "Generic float format should be rejected");
+    
+    /* Test malformed format strings */
+    result = sstr_format(&str, "Incomplete: %");
+    TEST_ASSERT(result == SSTR_ERROR_FORMAT, "Incomplete format should be rejected");
+    
+    result = sstr_format(&str, "Unknown: %v");
+    TEST_ASSERT(result == SSTR_ERROR_FORMAT, "Unknown format should be rejected");
+    
+    /* Test complex flags with allowed specifiers */
+    result = sstr_format(&str, "Complex but allowed: %+05d", 42);
+    TEST_ASSERT(result > 0, "Format with valid flags should succeed");
+    
+    /* Test width and precision with allowed specifiers */
+    result = sstr_format(&str, "Width and precision: %10.5d", 12345);
+    TEST_ASSERT(result > 0, "Format with valid width/precision should succeed");
+    
+    /* Test different allowed specifiers */
+    result = sstr_format(&str, "Allowed: %d %i %u %x %X %s %c %%", 1, 2, 3, 15, 16, "test", 'a');
+    TEST_ASSERT(result > 0, "All allowed specifiers should succeed");
+    
+    /* Test escape sequence */
+    result = sstr_format(&str, "Percent: 100%%");
+    TEST_ASSERT(result > 0, "Escaped percent should succeed");
+    TEST_ASSERT(strcmp(str.data, "Percent: 100%") == 0, "Escaped percent should render correctly");
+    
+#else
+    /* If validation is disabled, just check that it allows a non-standard format */
+    result = sstr_format(&str, "No validation: %f", 3.14);
+    /* Cannot test the exact result since it depends on whether float is supported */
+    
+    /* Just check that the function returned a valid result */
+    TEST_ASSERT(result >= 0 || result == SSTR_ERROR_FORMAT, 
+                "Without validation should either succeed or fail due to float not supported");
+#endif
+
+    return 1;
+}
+
 int run_format_tests(void)
 {
     int passed = 0;
@@ -168,6 +226,12 @@ int run_format_tests(void)
     if (test_format_complex()) {
         passed++;
         printf("PASS: format complex tests\n");
+    }
+    
+    total++;
+    if (test_format_validation()) {
+        passed++;
+        printf("PASS: format validation tests\n");
     }
 
     printf("Format tests: %d/%d passed\n", passed, total);
