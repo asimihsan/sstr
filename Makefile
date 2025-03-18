@@ -76,4 +76,10 @@ uninstall:
 	rm -f $(PREFIX)/include/sstr.h
 	rm -f $(PREFIX)/lib/$(STATIC_LIB)
 
-.PHONY: all clean check examples tests single_include install uninstall
+copyright:
+	fd -e c -e h | xargs addlicense -f copyright.tmpl -c "Asim Ihsan" -v -s
+
+copyright-check:
+	fd -e c -e h | xargs addlicense -f copyright.tmpl -c "Asim Ihsan" -v -s -check
+
+.PHONY: all clean check examples tests single_include install uninstall copyright copyright-check

@@ -120,4 +120,4 @@ You can configure the library by defining these before including the header:
 
 ## License
 
-[MIT License](LICENSE)
+This project is licensed under the Mozilla Public License 2.0. See the [LICENSE](LICENSE) file for details.
