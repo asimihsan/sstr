@@ -30,7 +30,7 @@ TEST_SRCS = tests/test_runner.c tests/test_core.c tests/test_format.c
 TEST_OBJS = $(TEST_SRCS:.c=.o)
 
 # Example objects
-EXAMPLE_SRCS = examples/basic_usage.c examples/formatting.c
+EXAMPLE_SRCS = examples/basic_usage.c examples/formatting.c examples/format_validation.c
 EXAMPLE_OBJS = $(EXAMPLE_SRCS:.c=.o)
 EXAMPLES = $(EXAMPLE_SRCS:.c=)
 
@@ -40,9 +40,19 @@ STATIC_LIB = libsstr.a
 # Default target
 all: $(STATIC_LIB) examples tests
 
-# Compile single-include version
-single_include: 
-	@echo "Single-include library is already available at single_include/sstr.h"
+# Generate the single-include version
+single_include:
+	./build_single_include.sh
+
+# Verify the single-include file is up-to-date
+verify-single-include: single_include
+	@if git diff --quiet single_include/sstr.h; then \
+		echo "✅ single_include/sstr.h is up-to-date"; \
+	else \
+		echo "❌ single_include/sstr.h is out of date. Run 'make single_include' to update."; \
+		git --no-pager diff single_include/sstr.h; \
+		exit 1; \
+	fi
 
 # Compile library objects
 %.o: %.c
@@ -68,14 +78,19 @@ test_runner: $(TEST_OBJS) $(STATIC_LIB)
 # Validation test
 test_validation: tests/test_validation.c $(STATIC_LIB)
 	$(CC) $(CFLAGS) $(INCLUDES) $< -L. -lsstr -o $@
+	
+# Test the single-include STB-style implementation
+test_single_include: tests/test_single_include.c
+	$(CC) $(CFLAGS) $< -o $@
 
 # Run tests
-check: test_runner
+check: test_runner test_single_include
 	./test_runner
+	./test_single_include
 
 # Clean build files
 clean:
-	rm -f $(LIB_OBJS) $(TEST_OBJS) $(EXAMPLE_OBJS) $(STATIC_LIB) test_runner test_validation $(EXAMPLES)
+	rm -f $(LIB_OBJS) $(TEST_OBJS) $(EXAMPLE_OBJS) $(STATIC_LIB) test_runner test_validation test_single_include $(EXAMPLES)
 
 # Install
 PREFIX ?= /usr/local
@@ -116,21 +131,26 @@ valgrind-docker:
 	docker run --rm sstr-valgrind
 
 # Test with different format validation configurations
-validation-tests: test_validation
+validation-tests: test_validation test_single_include
 	@echo "Testing with format validation enabled (default)..."
 	./test_validation
+	./test_single_include
 	@echo "\nTesting with format validation disabled..."
 	$(MAKE) clean
 	$(MAKE) NO_FORMAT_VALIDATION=1
 	$(MAKE) test_validation NO_FORMAT_VALIDATION=1
+	$(MAKE) test_single_include NO_FORMAT_VALIDATION=1
 	./test_validation
+	./test_single_include
 	@echo "\nTesting with custom allowed specifiers..."
 	$(MAKE) clean
 	$(MAKE) ALLOWED_SPECIFIERS="ds"
 	$(MAKE) test_validation
+	$(MAKE) test_single_include ALLOWED_SPECIFIERS="ds"
 	./test_validation
+	./test_single_include
 
 # CI target that runs all checks
-ci: all tests check format-check copyright-check valgrind-docker validation-tests
+ci: all tests check format-check copyright-check valgrind-docker validation-tests verify-single-include
 
-.PHONY: all clean check examples tests single_include install uninstall copyright copyright-check format format-check valgrind valgrind-docker validation-tests test_validation ci
+.PHONY: all clean check examples tests single_include verify-single-include install uninstall copyright copyright-check format format-check valgrind valgrind-docker validation-tests test_validation test_single_include ci

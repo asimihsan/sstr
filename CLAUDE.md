@@ -31,8 +31,13 @@
 - Enhance documentation with API details
 - Consider CI/CD integration for automated testing
 - Test performance in embedded contexts
-- Add optional format string validation
 - Add additional string manipulation functions:
   - String comparison (sstr_compare)
   - Substring extraction (sstr_substring)
   - String search (sstr_find)
+
+## Single-Include Workflow
+
+- Use `make single_include` to regenerate the single header file
+- Use `make verify-single-include` to check if it's up-to-date
+- CI automatically verifies the single-include file is in sync with the source code

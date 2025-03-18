@@ -57,10 +57,40 @@ int main(void) {
 
 ### Using the Single-Include Version
 
-For most embedded projects, the simplest approach is to use the single-include version:
+SStr uses the STB-style single-header approach common in popular C libraries:
+
+```c
+// In exactly ONE .c file in your project:
+#define SSTR_IMPLEMENTATION
+#include "sstr.h"
+
+// In all other files:
+#include "sstr.h"
+```
 
 1. Copy `single_include/sstr.h` to your project
-2. Include it in your code: `#include "sstr.h"`
+2. Define `SSTR_IMPLEMENTATION` in exactly one C file before including it
+3. Use regular includes in all other files
+
+This approach allows:
+- Header-only usage when needed (great for embedded)
+- Traditional compilation model when preferred (no duplicate code)
+- Maximum flexibility for different build systems
+- No build-time processing required
+
+#### Maintenance
+
+The single-include file is automatically generated from the source files:
+
+```bash
+# Generate or update the single-include file
+make single_include
+
+# Verify the single-include file is up-to-date
+make verify-single-include
+```
+
+CI automatically verifies that the single-include file is in sync with the source code.
 
 ### Building from Source
 

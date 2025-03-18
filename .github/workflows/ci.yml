@@ -50,6 +50,9 @@ jobs:
           go install github.com/google/addlicense@latest
           make copyright-check
         continue-on-error: true
+        
+      - name: Verify single-include file is up-to-date
+        run: make verify-single-include
 
   valgrind:
     runs-on: ubuntu-latest

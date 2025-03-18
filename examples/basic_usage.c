@@ -8,7 +8,8 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
-#include "../include/sstr/sstr.h"
+#define SSTR_IMPLEMENTATION
+#include "../single_include/sstr.h"
 #include <stdio.h>
 
 int main(void)

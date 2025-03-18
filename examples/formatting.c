@@ -8,7 +8,7 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
-#include "../include/sstr/sstr.h"
+#include "../single_include/sstr.h"
 #include <stdio.h>
 
 int main(void)
@@ -39,17 +39,16 @@ int main(void)
     sstr_format(&str, "Multiple values: %d, %s, %c\n", 42, "test", 'X');
     printf("%s", str.data);
 
-    /* Format with precision */
-    sstr_format(&str, "Precision: %.2f\n", 3.14159);
-    printf("%s", str.data);
-
     /* Format with width */
     sstr_format(&str, "Width: [%10s]\n", "test");
     printf("%s", str.data);
-
-    /* Format with width and precision */
-    sstr_format(&str, "Width and precision: [%10.2f]\n", 3.14159);
+    
+    /* Format with escaped % */
+    sstr_format(&str, "Percent sign: 100%%\n");
     printf("%s", str.data);
+    
+    /* Note: Floating point formats (%f, %e, %g) and pointer (%p) are 
+       blocked by default format validation */
 
     return 0;
 }
