@@ -15,7 +15,11 @@ A minimal, bounds-checked string handling library designed for embedded systems 
 ## Quick Start
 
 ```c
-#include "sstr.h"
+// Option 1: Using the multi-file version
+#include "sstr/sstr.h"
+// OR Option 2: Using the single-include version
+// #include "sstr.h"
+
 #include <stdio.h>
 
 int main(void) {
@@ -62,10 +66,10 @@ SStr uses the STB-style single-header approach common in popular C libraries:
 ```c
 // In exactly ONE .c file in your project:
 #define SSTR_IMPLEMENTATION
-#include "sstr.h"
+#include "sstr.h"  // Path to your copy of single_include/sstr.h
 
 // In all other files:
-#include "sstr.h"
+#include "sstr.h"  // Path to your copy of single_include/sstr.h
 ```
 
 1. Copy `single_include/sstr.h` to your project
@@ -77,6 +81,18 @@ This approach allows:
 - Traditional compilation model when preferred (no duplicate code)
 - Maximum flexibility for different build systems
 - No build-time processing required
+
+#### Configuration with Single-Include
+
+All configuration options work with the single-include version. Define them before including the header:
+
+```c
+// Example configuration with single-include
+#define SSTR_DEFAULT_POLICY SSTR_TRUNCATE
+#define SSTR_VALIDATE_FORMAT 0  // Disable format validation
+#define SSTR_IMPLEMENTATION
+#include "sstr.h"
+```
 
 #### Maintenance
 
