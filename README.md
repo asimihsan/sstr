@@ -143,6 +143,67 @@ Format string vulnerabilities are a common security issue in C programs. SStr ad
 
 This protects against both accidental bugs and potential exploits where untrusted input could be used as format strings.
 
+### CBMC Formal Verification
+
+SStr uses the C Bounded Model Checker (CBMC) to formally verify critical safety properties:
+
+#### What is CBMC?
+
+CBMC is a formal verification tool that uses symbolic execution and SAT/SMT solvers to exhaustively verify properties of C code. Unlike testing, which checks individual inputs, formal verification mathematically proves that properties hold for all possible inputs within defined bounds.
+
+#### What CBMC Can Verify
+
+- **Memory Safety**: Buffer overflows, null pointer dereferences, array bounds
+- **Assertions**: User-defined correctness properties expressed as assertions
+- **Undefined Behavior**: Detection of operations with undefined behavior
+- **Functional Correctness**: Ensuring functions meet their specifications
+
+#### What CBMC Cannot Verify
+
+- Unbounded loops without explicit unwinding limits
+- Properties requiring more loop iterations than the unwinding bound
+- Hardware-specific timing behavior
+- Properties involving system calls or external interfaces
+
+#### Verification Harnesses
+
+SStr includes custom verification harnesses (`verification/sstr_*_harness.c`) for each core function:
+
+```bash
+# Run CBMC verification
+make verify-init     # Verify sstr_init function
+make verify-copy     # Verify sstr_copy function
+make verify-append   # Verify sstr_append function
+```
+
+These harnesses:
+- Create controlled test environments for each function
+- Set up precise input conditions to explore edge cases
+- Explicitly verify post-conditions (such as null-termination)
+- Check object bounds and memory safety
+- Verify proper error handling
+
+#### Understanding CBMC Directives
+
+The codebase uses special CBMC directives that aid verification:
+
+- `__CPROVER_assume(condition)`: Constrains inputs to meet preconditions
+- `__CPROVER_assert(condition, message)`: Verifies properties must hold
+- `__CPROVER_r_ok(pointer, size)`: Checks if reading memory is safe
+- `__CPROVER_w_ok(pointer, size)`: Checks if writing memory is safe
+
+#### Why Bounded Verification is Valuable
+
+Although CBMC verification is bounded (limited to specific unwinding depths):
+
+1. Most real-world bugs manifest with relatively small inputs
+2. Verification provides exhaustive coverage within these bounds
+3. It's significantly stronger than testing, as it checks all possible inputs
+4. Boundary cases are thoroughly analyzed
+5. The process forces explicit consideration of error cases and invariants
+
+For SStr, CBMC verification mathematically proves that string operations are memory-safe and correctly implement their specifications for all possible inputs within the verification bounds.
+
 ## API Reference
 
 ### Core Data Types

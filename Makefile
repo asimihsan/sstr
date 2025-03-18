@@ -159,7 +159,25 @@ validation-tests: test_validation test_single_include
 	./test_validation
 	./test_single_include
 
+# CBMC verification targets with bounded loop unwinding and timeout
+verify-init:
+	cbmc src/sstr.c src/sstr_format.c verification/sstr_init_harness.c --function sstr_init_harness --bounds-check --pointer-check --unwind 10 --unwinding-assertions --stop-on-fail
+
+# Use a smaller timeout for the more complex functions
+verify-copy:
+	cbmc src/sstr.c src/sstr_format.c verification/sstr_copy_harness.c --function sstr_copy_harness --bounds-check --pointer-check --unwind 10 --unwinding-assertions --stop-on-fail --slice-formula
+
+verify-append:
+	cbmc src/sstr.c src/sstr_format.c verification/sstr_append_harness.c --function sstr_append_harness --bounds-check --pointer-check --unwind 10 --unwinding-assertions --stop-on-fail --slice-formula
+
+# Show available properties for a function
+cbmc-properties:
+	cbmc src/sstr.c src/sstr_format.c --function sstr_init --show-properties
+
+# Run all CBMC verifications
+verify: verify-init verify-copy verify-append
+
 # CI target that runs all checks
 ci: all tests check format-check copyright-check valgrind-docker validation-tests verify-single-include
 
-.PHONY: all clean check examples tests benchmarks run_benchmarks single_include verify-single-include install uninstall copyright copyright-check format format-check valgrind valgrind-docker validation-tests test_validation test_single_include ci
+.PHONY: all clean check examples tests benchmarks run_benchmarks single_include verify-single-include install uninstall copyright copyright-check format format-check valgrind valgrind-docker validation-tests test_validation test_single_include ci verify verify-init verify-copy verify-append cbmc-properties

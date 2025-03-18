@@ -13,6 +13,7 @@ results*.md
 build/*
 *.xml
 *.goto
+test_single_include
 
 CMakeLists.txt.user
 CMakeCache.txt
