@@ -82,4 +82,24 @@ copyright:
 copyright-check:
 	fd -e c -e h | xargs addlicense -f copyright.tmpl -c "Asim Ihsan" -v -s -check
 
-.PHONY: all clean check examples tests single_include install uninstall copyright copyright-check
+# Format code using clang-format
+format:
+	find src include tests examples -name "*.c" -o -name "*.h" | xargs clang-format -i
+
+# Check if code is properly formatted
+format-check:
+	find src include tests examples -name "*.c" -o -name "*.h" | xargs clang-format --dry-run --Werror
+
+# Run Valgrind memory tests
+valgrind: test_runner
+	valgrind --leak-check=full --error-exitcode=1 ./test_runner
+
+# Docker-based Valgrind for cross-platform support
+valgrind-docker:
+	docker build -t sstr-valgrind .
+	docker run --rm sstr-valgrind
+
+# CI target that runs all checks
+ci: all tests check format-check copyright-check valgrind-docker
+
+.PHONY: all clean check examples tests single_include install uninstall copyright copyright-check format format-check valgrind valgrind-docker ci

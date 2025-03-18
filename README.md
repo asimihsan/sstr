@@ -118,30 +118,76 @@ You can configure the library by defining these before including the header:
 #define SSTR_ENABLE_FLOAT_FORMAT 1
 ```
 
-## Memory Testing with Valgrind
+## Development
+
+### Code Formatting
+
+This project uses clang-format for consistent code style. To format your code:
+
+```bash
+# Format all code
+make format
+
+# Or use the script
+./format_code.sh
+
+# Check if code is properly formatted (without modifying files)
+make format-check
+```
+
+### Continuous Integration
+
+The project includes a comprehensive CI setup with the following checks:
+
+```bash
+# Run all CI checks locally (build, test, format, copyright, valgrind)
+make ci
+```
+
+Individual checks can also be run:
+
+```bash
+# Build and run tests
+make check
+
+# Check formatting
+make format-check
+
+# Check copyright headers
+make copyright-check
+```
+
+### Memory Testing with Valgrind
 
 This project includes a Docker-based setup for running Valgrind memory tests, which works on both Mac and Linux systems.
 
-### Running Valgrind Tests Locally
+#### Running Valgrind Tests Locally
 
 To run Valgrind tests locally (requires Docker):
 
 ```bash
 # On Mac or Linux
 ./run_valgrind.sh
+
+# Or using make target
+make valgrind-docker
 ```
 
 This script builds a Docker image with Valgrind and runs the tests inside the container.
 
-### GitHub Actions Integration
+#### GitHub Actions Integration
 
-The repository is configured with a GitHub Actions workflow that automatically runs Valgrind tests on all PRs and pushes to main.
+The repository is configured with a GitHub Actions workflow that automatically runs all CI checks (including Valgrind) on all PRs and pushes to main.
 
-### Custom Valgrind Options
+#### Custom Valgrind Options
 
 To run Valgrind with custom options:
 
 ```bash
+# For systems with Valgrind installed natively
+make valgrind
+
+# For Docker-based Valgrind with custom options
 docker build -t sstr-valgrind .
 docker run --rm sstr-valgrind valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./build/test_runner
 ```
