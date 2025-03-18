@@ -1,5 +1,6 @@
 [tools]
 clang = "latest"
 cmake = "prefix:3"
+hyperfine = "latest"
 make = "latest"
 ninja = "latest"

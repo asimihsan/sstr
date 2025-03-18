@@ -295,6 +295,25 @@ make valgrind-docker
 make valgrind
 ```
 
+### Benchmarking
+
+The library includes benchmarks to compare performance against standard C string functions:
+
+```bash
+# Run all benchmarks (requires hyperfine)
+./run_benchmarks.sh
+
+# Visualize results (requires Python with matplotlib)
+python plot_benchmarks.py
+```
+
+Benchmarks compare:
+- `sstr_copy` vs `strcpy`
+- `sstr_append` vs `strcat`
+- `sstr_format` vs `snprintf`
+
+See the [benchmarks README](benchmarks/README.md) for more details.
+
 ### Continuous Integration
 
 The project includes a comprehensive CI setup:

@@ -40,6 +40,15 @@ STATIC_LIB = libsstr.a
 # Default target
 all: $(STATIC_LIB) examples tests
 
+# Benchmarks
+benchmarks:
+	mkdir -p build
+	cd build && cmake .. -DSSTR_BUILD_BENCHMARKS=ON && \
+	make bench_copy_sstr bench_copy_std bench_append_sstr bench_append_std bench_format_sstr bench_format_std
+
+run_benchmarks: benchmarks
+	mise x -- ./run_benchmarks.sh
+
 # Generate the single-include version
 single_include:
 	./build_single_include.sh
@@ -153,4 +162,4 @@ validation-tests: test_validation test_single_include
 # CI target that runs all checks
 ci: all tests check format-check copyright-check valgrind-docker validation-tests verify-single-include
 
-.PHONY: all clean check examples tests single_include verify-single-include install uninstall copyright copyright-check format format-check valgrind valgrind-docker validation-tests test_validation test_single_include ci
+.PHONY: all clean check examples tests benchmarks run_benchmarks single_include verify-single-include install uninstall copyright copyright-check format format-check valgrind valgrind-docker validation-tests test_validation test_single_include ci

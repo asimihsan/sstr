@@ -4,6 +4,7 @@ project(sstr VERSION 0.1.0 LANGUAGES C)
 # Options
 option(SSTR_BUILD_TESTS "Build tests" ON)
 option(SSTR_BUILD_EXAMPLES "Build examples" ON)
+option(SSTR_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(SSTR_VALIDATE_FORMAT "Enable format string validation" ON)
 set(SSTR_ALLOWED_SPECIFIERS "diuxXsc%" CACHE STRING "Allowed format specifiers")
 
@@ -61,6 +62,27 @@ if(SSTR_BUILD_TESTS)
     # Add test
     enable_testing()
     add_test(NAME test_runner COMMAND test_runner)
+endif()
+
+# Benchmarks
+if(SSTR_BUILD_BENCHMARKS)
+    # Copy benchmark
+    add_executable(bench_copy_sstr benchmarks/bench_copy_sstr.c)
+    target_link_libraries(bench_copy_sstr sstr)
+    
+    add_executable(bench_copy_std benchmarks/bench_copy_std.c)
+    
+    # Append benchmark
+    add_executable(bench_append_sstr benchmarks/bench_append_sstr.c)
+    target_link_libraries(bench_append_sstr sstr)
+    
+    add_executable(bench_append_std benchmarks/bench_append_std.c)
+    
+    # Format benchmark
+    add_executable(bench_format_sstr benchmarks/bench_format_sstr.c)
+    target_link_libraries(bench_format_sstr sstr)
+    
+    add_executable(bench_format_std benchmarks/bench_format_std.c)
 endif()
 
 # Installation

@@ -7,6 +7,9 @@
 - Build tests: `make tests`
 - Run all tests: `make check`
 - Clean: `make clean`
+- Build benchmarks: `cmake -DSSTR_BUILD_BENCHMARKS=ON && make`
+- Run benchmarks: `./run_benchmarks.sh`
+- Visualize benchmark results: `python plot_benchmarks.py`
 
 ## Code Style Guidelines
 
@@ -24,6 +27,17 @@
 - Document all functions with descriptive comments
 - Use consistent naming: lowercase with underscores
 - Use consistent parameter names across similar functions
+
+## Benchmark System
+
+- All benchmarks use hyperfine for reliable measurements
+- Benchmarks compare SStr functions with standard C equivalents:
+  - sstr_copy vs strcpy
+  - sstr_append vs strcat
+  - sstr_format vs snprintf
+- Run benchmarks with different input sizes to see scaling behavior
+- Benchmark results help quantify the safety/performance tradeoff
+- Python visualization script creates charts for easy comparison
 
 ## Next Steps
 

@@ -7,6 +7,10 @@ examples/formatting
 .devbox
 .idea
 test_validation
+*.csv
+*.json
+results*.md
+build/*
 
 CMakeLists.txt.user
 CMakeCache.txt
