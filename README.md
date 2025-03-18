@@ -12,19 +12,24 @@ A minimal, bounds-checked string handling library designed for embedded systems 
 - Has minimal standard library dependencies
 - Features clear, consistent error handling
 
-## Basic Usage
+## Quick Start
 
 ```c
 #include "sstr.h"
 #include <stdio.h>
 
-int main() {
+int main(void) {
     /* Stack-allocated buffer */
     char buffer[64];
     
     /* Initialize an SStr structure with the buffer */
     SStr str;
     SStrResult result = sstr_init(&str, buffer, sizeof(buffer));
+    
+    if (result != SSTR_SUCCESS) {
+        printf("Failed to initialize string\n");
+        return 1;
+    }
     
     /* Copy a string */
     result = sstr_copy(&str, "Hello, ");
@@ -36,8 +41,11 @@ int main() {
     printf("Result: %s (length: %zu, capacity: %zu)\n", 
            str.data, str.length, str.capacity);
            
-    /* Format a string */
+    /* Format a string with validation (only certain format specifiers allowed) */
     int chars_written = sstr_format(&str, "The answer is %d", 42);
+    if (chars_written < 0) {
+        printf("Format error: %d\n", chars_written);
+    }
     
     printf("Formatted: %s\n", str.data);
     
@@ -56,19 +64,38 @@ For most embedded projects, the simplest approach is to use the single-include v
 
 ### Building from Source
 
-```
+```bash
+# Using CMake
 mkdir build && cd build
 cmake ..
 make
 make install  # Optional, may require sudo
-```
 
-Or using the Makefile:
-
-```
+# Or using the Makefile
 make
 make install  # Optional, may require sudo
 ```
+
+## Security Features
+
+SStr includes several security features designed for embedded systems:
+
+### Bounds Checking
+
+All operations check buffer sizes to prevent buffer overflows. When a buffer would overflow:
+- If `SSTR_DEFAULT_POLICY` is `SSTR_ERROR`: Returns an error code
+- If `SSTR_DEFAULT_POLICY` is `SSTR_TRUNCATE`: Safely truncates the string
+
+### Format Validation
+
+Format string vulnerabilities are a common security issue in C programs. SStr addresses this with format validation:
+
+- By default, only safe format specifiers are allowed: `d i u x X s c %`
+- Floating point (`f e g`) and pointer (`p`) specifiers are disabled by default
+- Format validation can be customized or disabled at compile time
+- Provides compile-time configuration options for allowable format specifiers
+
+This protects against both accidental bugs and potential exploits where untrusted input could be used as format strings.
 
 ## API Reference
 
@@ -84,6 +111,12 @@ typedef enum {
     SSTR_ERROR_ARGUMENT = -4     /* Invalid argument (e.g., NULL string for %s) */
 } SStrResult;
 
+/* Truncation policy for string operations */
+typedef enum {
+    SSTR_TRUNCATE,   /* Truncate output when buffer is too small */
+    SSTR_ERROR       /* Return error when buffer is too small */
+} SStrTruncationPolicy;
+
 /* String structure with bounds checking */
 typedef struct {
     char   *data;     /* Points to stack-allocated buffer */
@@ -94,28 +127,86 @@ typedef struct {
 
 ### Core Functions
 
-- `SStrResult sstr_init(SStr *s, char *buffer, size_t buffer_size)` - Initialize a string with a stack buffer
-- `SStrResult sstr_clear(SStr *s)` - Clear a string (set length to zero)
-- `SStrResult sstr_copy(SStr *dest, const char *src)` - Copy a C string to an SStr
-- `SStrResult sstr_copy_sstr(SStr *dest, const SStr *src)` - Copy between SStr structures
-- `SStrResult sstr_append(SStr *dest, const char *src)` - Append a C string to an SStr
-- `SStrResult sstr_append_sstr(SStr *dest, const SStr *src)` - Append one SStr to another
-- `int sstr_format(SStr *dest, const char *fmt, ...)` - Format a string (printf-style)
-- `int sstr_vformat(SStr *dest, const char *fmt, va_list args)` - Format with va_list
+#### Initialization and Basic Operations
 
-## Configuration
+- `SStrResult sstr_init(SStr *s, char *buffer, size_t buffer_size)`  
+  Initialize a string with a stack buffer
 
-You can configure the library by defining these before including the header:
+- `SStrResult sstr_clear(SStr *s)`  
+  Clear a string (set length to zero)
+
+#### String Copy Operations
+
+- `SStrResult sstr_copy(SStr *dest, const char *src)`  
+  Copy a C string to an SStr
+
+- `SStrResult sstr_copy_sstr(SStr *dest, const SStr *src)`  
+  Copy between SStr structures
+
+#### String Append Operations
+
+- `SStrResult sstr_append(SStr *dest, const char *src)`  
+  Append a C string to an SStr
+
+- `SStrResult sstr_append_sstr(SStr *dest, const SStr *src)`  
+  Append one SStr to another
+
+#### Formatting Functions
+
+- `int sstr_format(SStr *dest, const char *fmt, ...)`  
+  Format a string (printf-style), returns number of characters written or negative error code
+
+- `int sstr_vformat(SStr *dest, const char *fmt, va_list args)`  
+  Format with va_list, returns number of characters written or negative error code
+
+## Configuration Options
+
+You can configure the library by defining these macros before including the header:
+
+### Truncation Policy
 
 ```c
-/* Set truncation policy (SSTR_TRUNCATE or SSTR_ERROR) */
+/* Set default truncation policy (SSTR_TRUNCATE or SSTR_ERROR) */
 #define SSTR_DEFAULT_POLICY SSTR_ERROR
+```
 
+### Size Limits
+
+```c
 /* Maximum allowed string size (to prevent integer overflow) */
 #define SSTR_MAX_SIZE ((size_t)0x7FFFFFFF)
+```
 
-/* Enable/disable floating point format support */
-#define SSTR_ENABLE_FLOAT_FORMAT 1
+### Format String Validation
+
+```c
+/* Enable or disable format string validation (1 or 0) */
+#define SSTR_VALIDATE_FORMAT 1
+
+/* Define which format specifiers are allowed when validation is enabled */
+#define SSTR_ALLOWED_SPECIFIERS "diuxXsc%"
+```
+
+### Build-time Configuration
+
+For Makefile builds, you can use:
+
+```bash
+# Disable format validation
+make NO_FORMAT_VALIDATION=1
+
+# Customize allowed format specifiers
+make ALLOWED_SPECIFIERS="dis%"
+```
+
+For CMake builds:
+
+```bash
+# Disable format validation
+cmake -DSSTR_VALIDATE_FORMAT=OFF ..
+
+# Customize allowed format specifiers
+cmake -DSSTR_ALLOWED_SPECIFIERS="dis%" ..
 ```
 
 ## Development
@@ -135,61 +226,36 @@ make format
 make format-check
 ```
 
-### Continuous Integration
-
-The project includes a comprehensive CI setup with the following checks:
+### Testing
 
 ```bash
-# Run all CI checks locally (build, test, format, copyright, valgrind)
-make ci
-```
-
-Individual checks can also be run:
-
-```bash
-# Build and run tests
+# Build and run all tests
 make check
 
-# Check formatting
-make format-check
-
-# Check copyright headers
-make copyright-check
+# Test different format validation configurations
+make validation-tests
 ```
 
 ### Memory Testing with Valgrind
 
-This project includes a Docker-based setup for running Valgrind memory tests, which works on both Mac and Linux systems.
-
-#### Running Valgrind Tests Locally
-
-To run Valgrind tests locally (requires Docker):
-
 ```bash
-# On Mac or Linux
+# On Mac or Linux with Docker
+make valgrind-docker
+
+# Or using the script
 ./run_valgrind.sh
 
-# Or using make target
-make valgrind-docker
-```
-
-This script builds a Docker image with Valgrind and runs the tests inside the container.
-
-#### GitHub Actions Integration
-
-The repository is configured with a GitHub Actions workflow that automatically runs all CI checks (including Valgrind) on all PRs and pushes to main.
-
-#### Custom Valgrind Options
-
-To run Valgrind with custom options:
-
-```bash
 # For systems with Valgrind installed natively
 make valgrind
+```
 
-# For Docker-based Valgrind with custom options
-docker build -t sstr-valgrind .
-docker run --rm sstr-valgrind valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./build/test_runner
+### Continuous Integration
+
+The project includes a comprehensive CI setup:
+
+```bash
+# Run all CI checks locally (build, test, format, copyright, valgrind)
+make ci
 ```
 
 ## License
