@@ -1,0 +1,69 @@
+cmake_minimum_required(VERSION 3.10)
+project(sstr VERSION 0.1.0 LANGUAGES C)
+
+# Options
+option(SSTR_BUILD_TESTS "Build tests" ON)
+option(SSTR_BUILD_EXAMPLES "Build examples" ON)
+
+# Set C standard
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
+# Add compiler warnings and configure options
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-Wall -Wextra -pedantic)
+endif()
+
+# Default configuration
+add_compile_definitions(SSTR_DEFAULT_POLICY=SSTR_ERROR)
+
+# Include directories
+include_directories(include)
+
+# Library source files
+set(SSTR_SOURCES
+    src/sstr.c
+    src/sstr_format.c
+)
+
+# Create library
+add_library(sstr ${SSTR_SOURCES})
+target_include_directories(sstr PUBLIC include)
+
+# Examples
+if(SSTR_BUILD_EXAMPLES)
+    add_executable(basic_usage examples/basic_usage.c)
+    target_link_libraries(basic_usage sstr)
+    
+    add_executable(formatting examples/formatting.c)
+    target_link_libraries(formatting sstr)
+endif()
+
+# Tests
+if(SSTR_BUILD_TESTS)
+    add_executable(test_runner 
+        tests/test_runner.c
+        tests/test_core.c
+        tests/test_format.c
+    )
+    target_link_libraries(test_runner sstr)
+    
+    # Add test
+    enable_testing()
+    add_test(NAME test_runner COMMAND test_runner)
+endif()
+
+# Installation
+install(TARGETS sstr
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
+
+install(DIRECTORY include/sstr/
+    DESTINATION include/sstr
+    FILES_MATCHING PATTERN "*.h"
+)
+
+install(FILES single_include/sstr.h
+    DESTINATION include
+)

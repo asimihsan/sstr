@@ -1,0 +1,6 @@
+libsstr.a
+test_runner
+.jj
+**/*.o
+examples/basic_usage
+examples/formatting

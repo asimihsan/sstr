@@ -1,0 +1,3 @@
+[tools]
+cmake = "prefix:3"
+make = "latest"
