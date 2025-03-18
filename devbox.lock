@@ -51,54 +51,6 @@
     },
     "github:NixOS/nixpkgs/nixpkgs-unstable": {
       "resolved": "github:NixOS/nixpkgs/096478927c360bc18ea80c8274f013709cf7bdcd?lastModified=1742206328&narHash=sha256-q%2BAQ%2F%2F%2FoMnyyFzzF4H9ShSRENt3Zsx37jTiRkLkXXE0%3D"
-    },
-    "mise@latest": {
-      "last_modified": "2025-03-11T17:52:14Z",
-      "resolved": "github:NixOS/nixpkgs/0d534853a55b5d02a4ababa1d71921ce8f0aee4c#mise",
-      "source": "devbox-search",
-      "version": "2025.2.7",
-      "systems": {
-        "aarch64-darwin": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/rj24b6kyr7dj94c072xz84ayyvm36ac3-mise-2025.2.7",
-              "default": true
-            }
-          ],
-          "store_path": "/nix/store/rj24b6kyr7dj94c072xz84ayyvm36ac3-mise-2025.2.7"
-        },
-        "aarch64-linux": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/0jykdgjp7pbzskqmnbm9979yiqzlbc2v-mise-2025.2.7",
-              "default": true
-            }
-          ],
-          "store_path": "/nix/store/0jykdgjp7pbzskqmnbm9979yiqzlbc2v-mise-2025.2.7"
-        },
-        "x86_64-darwin": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/xnam7hfw6kr232acqv13fhw4ykqjh46s-mise-2025.2.7",
-              "default": true
-            }
-          ],
-          "store_path": "/nix/store/xnam7hfw6kr232acqv13fhw4ykqjh46s-mise-2025.2.7"
-        },
-        "x86_64-linux": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/gj8bpc422wqmajivl83pp40s90v5lk9m-mise-2025.2.7",
-              "default": true
-            }
-          ],
-          "store_path": "/nix/store/gj8bpc422wqmajivl83pp40s90v5lk9m-mise-2025.2.7"
-        }
-      }
     }
   }
 }
