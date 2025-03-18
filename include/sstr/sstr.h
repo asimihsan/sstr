@@ -78,13 +78,14 @@ SStrResult sstr_clear(SStr *s);
 SStrResult sstr_copy(SStr *dest, const char *src);
 
 /**
- * Copy from one SStr to another
+ * Copy a specified number of characters from a C string to an SStr
  *
  * @param dest Destination SStr
- * @param src Source SStr
+ * @param src Source C string
+ * @param src_len Number of characters to copy from source
  * @return SSTR_SUCCESS or error code
  */
-SStrResult sstr_copy_sstr(SStr *dest, const SStr *src);
+SStrResult sstr_copy_n(SStr *dest, const char *src, size_t src_len);
 
 /**
  * Append a C string to an SStr

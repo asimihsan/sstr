@@ -7,7 +7,7 @@ This directory contains benchmark code to compare the performance of the SStr li
 The benchmarks compare the following operations:
 
 1. **String Copy**
-   - `sstr_copy` vs `strcpy`
+   - `sstr_copy` and `sstr_copy_n` vs `strcpy`
    - Tests with small, medium, and large strings
 
 2. **String Append**

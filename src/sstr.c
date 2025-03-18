@@ -68,26 +68,27 @@ SStrResult sstr_copy(SStr *dest, const char *src)
     return SSTR_SUCCESS;
 }
 
-SStrResult sstr_copy_sstr(SStr *dest, const SStr *src)
+SStrResult sstr_copy_n(SStr *dest, const char *src, size_t src_len)
 {
-    if (dest == NULL || dest->data == NULL || src == NULL || src->data == NULL) {
+    if (dest == NULL || dest->data == NULL || src == NULL) {
         return SSTR_ERROR_NULL;
     }
 
-    if (src->length > dest->capacity) {
+    if (src_len > dest->capacity) {
         /* Get truncation policy at runtime - we will respect compile-time policy here
          * The policy could have been changed after the library was compiled */
 #if SSTR_DEFAULT_POLICY == SSTR_ERROR
         return SSTR_ERROR_OVERFLOW;
 #else
         size_t copy_len = dest->capacity;
-        memcpy(dest->data, src->data, copy_len);
+        memcpy(dest->data, src, copy_len);
         dest->data[copy_len] = '\0';
         dest->length = copy_len;
 #endif
     } else {
-        memcpy(dest->data, src->data, src->length + 1); /* +1 for null terminator */
-        dest->length = src->length;
+        memcpy(dest->data, src, src_len);
+        dest->data[src_len] = '\0';
+        dest->length = src_len;
     }
 
     return SSTR_SUCCESS;

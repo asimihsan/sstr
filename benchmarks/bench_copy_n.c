@@ -18,11 +18,12 @@
 #define BUFFER_SIZE 256
 
 int main(int argc, char *argv[]) {
-    char *input_string = "Hello, world! This is a benchmark for sstr_copy performance testing.";
+    char *input_string = "Hello, world! This is a benchmark for sstr_copy_n performance testing.";
     if (argc > 1) {
         input_string = argv[1];
     }
 
+    size_t input_len = strlen(input_string);
     char buffer[BUFFER_SIZE];
     SStr dest;
     sstr_init(&dest, buffer, BUFFER_SIZE);
@@ -30,13 +31,13 @@ int main(int argc, char *argv[]) {
     // Warm up
     for (int i = 0; i < 1000; i++) {
         sstr_clear(&dest);
-        sstr_copy(&dest, input_string);
+        sstr_copy_n(&dest, input_string, input_len);
     }
 
     // Perform benchmark
     for (int i = 0; i < NUM_ITERATIONS; i++) {
         sstr_clear(&dest);
-        sstr_copy(&dest, input_string);
+        sstr_copy_n(&dest, input_string, input_len);
     }
 
     // Prevent optimization by using the result

@@ -32,6 +32,14 @@ int main(void)
         printf("Failed to copy string\n");
         return 1;
     }
+    
+    /* Copy a specific number of characters */
+    result = sstr_copy_n(&str, "Goodbye, world!", 8); /* Copies only "Goodbye," */
+    if (result != SSTR_SUCCESS) {
+        printf("Failed to copy string with length\n");
+        return 1;
+    }
+    printf("Partial copy: %s (length: %zu, capacity: %zu)\n", str.data, str.length, str.capacity);
 
     /* Append another string */
     result = sstr_append(&str, "world!");

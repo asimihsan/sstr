@@ -11,6 +11,8 @@ test_validation
 *.json
 results*.md
 build/*
+*.xml
+*.goto
 
 CMakeLists.txt.user
 CMakeCache.txt

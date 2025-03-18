@@ -67,8 +67,8 @@ endif()
 # Benchmarks
 if(SSTR_BUILD_BENCHMARKS)
     # Copy benchmark
-    add_executable(bench_copy_sstr benchmarks/bench_copy_sstr.c)
-    target_link_libraries(bench_copy_sstr sstr)
+    add_executable(bench_copy_n benchmarks/bench_copy_n.c)
+    target_link_libraries(bench_copy_n sstr)
     
     add_executable(bench_copy_std benchmarks/bench_copy_std.c)
     

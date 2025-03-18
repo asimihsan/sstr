@@ -186,8 +186,8 @@ typedef struct {
 - `SStrResult sstr_copy(SStr *dest, const char *src)`  
   Copy a C string to an SStr
 
-- `SStrResult sstr_copy_sstr(SStr *dest, const SStr *src)`  
-  Copy between SStr structures
+- `SStrResult sstr_copy_n(SStr *dest, const char *src, size_t src_len)`  
+  Copy a specified number of characters from a C string to an SStr
 
 #### String Append Operations
 

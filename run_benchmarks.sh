@@ -14,7 +14,7 @@ echo "Building benchmarks..."
 mkdir -p build
 cd build
 cmake .. -DSSTR_BUILD_BENCHMARKS=ON
-make bench_copy_sstr bench_copy_std bench_append_sstr bench_append_std bench_format_sstr bench_format_std
+make bench_copy_n bench_copy_std bench_append_sstr bench_append_std bench_format_sstr bench_format_std
 cd ..
 
 # Define benchmark scenarios
@@ -25,21 +25,21 @@ LARGE_STRING=$(printf '%.0s-' {1..200})  # 200 character string
 # Run the benchmarks
 echo "Running string copy benchmarks..."
 hyperfine --warmup 3 \
-    "./build/bench_copy_sstr '$SMALL_STRING'" \
+    "./build/bench_copy_n '$SMALL_STRING'" \
     "./build/bench_copy_std '$SMALL_STRING'" \
     --export-markdown results_copy_small.md \
     --export-json results_copy_small.json \
     --export-csv results_copy_small.csv
 
 hyperfine --warmup 3 \
-    "./build/bench_copy_sstr '$MEDIUM_STRING'" \
+    "./build/bench_copy_n '$MEDIUM_STRING'" \
     "./build/bench_copy_std '$MEDIUM_STRING'" \
     --export-markdown results_copy_medium.md \
     --export-json results_copy_medium.json \
     --export-csv results_copy_medium.csv
 
 hyperfine --warmup 3 \
-    "./build/bench_copy_sstr '$LARGE_STRING'" \
+    "./build/bench_copy_n '$LARGE_STRING'" \
     "./build/bench_copy_std '$LARGE_STRING'" \
     --export-markdown results_copy_large.md \
     --export-json results_copy_large.json \
