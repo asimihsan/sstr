@@ -118,6 +118,34 @@ You can configure the library by defining these before including the header:
 #define SSTR_ENABLE_FLOAT_FORMAT 1
 ```
 
+## Memory Testing with Valgrind
+
+This project includes a Docker-based setup for running Valgrind memory tests, which works on both Mac and Linux systems.
+
+### Running Valgrind Tests Locally
+
+To run Valgrind tests locally (requires Docker):
+
+```bash
+# On Mac or Linux
+./run_valgrind.sh
+```
+
+This script builds a Docker image with Valgrind and runs the tests inside the container.
+
+### GitHub Actions Integration
+
+The repository is configured with a GitHub Actions workflow that automatically runs Valgrind tests on all PRs and pushes to main.
+
+### Custom Valgrind Options
+
+To run Valgrind with custom options:
+
+```bash
+docker build -t sstr-valgrind .
+docker run --rm sstr-valgrind valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./build/test_runner
+```
+
 ## License
 
 This project is licensed under the Mozilla Public License 2.0. See the [LICENSE](LICENSE) file for details.
