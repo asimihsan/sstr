@@ -38,11 +38,11 @@
 
 /**
  * Format string validation control.
- * When enabled, format strings will be validated to ensure only 
+ * When enabled, format strings will be validated to ensure only
  * allowed specifiers are used.
  */
 #ifndef SSTR_VALIDATE_FORMAT
-#define SSTR_VALIDATE_FORMAT 1  /* Enable by default */
+#define SSTR_VALIDATE_FORMAT 1 /* Enable by default */
 #endif
 
 /**

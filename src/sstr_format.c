@@ -46,39 +46,38 @@ static int validate_format_string(const char *fmt)
     }
 
     const char *ptr = fmt;
-    
+
     while (*ptr) {
         /* Find the next '%' character */
         if (*ptr != '%') {
             ptr++;
             continue;
         }
-        
+
         /* Process a % character */
         ptr++; /* Move past '%' */
-        
+
         /* Handle %% escape sequence */
         if (*ptr == '%') {
             ptr++;
             continue;
         }
-        
+
         /* If we reached the end of the string after a %, that's invalid */
         if (*ptr == '\0') {
             return SSTR_ERROR_FORMAT;
         }
-        
+
         /* Skip flags: "-+0 #" */
-        while (*ptr == '-' || *ptr == '+' || *ptr == '0' || 
-               *ptr == ' ' || *ptr == '#') {
+        while (*ptr == '-' || *ptr == '+' || *ptr == '0' || *ptr == ' ' || *ptr == '#') {
             ptr++;
         }
-        
+
         /* Skip width: digits */
         while (isdigit((unsigned char)*ptr)) {
             ptr++;
         }
-        
+
         /* Skip precision: .digits */
         if (*ptr == '.') {
             ptr++;
@@ -86,33 +85,32 @@ static int validate_format_string(const char *fmt)
                 ptr++;
             }
         }
-        
+
         /* Skip length modifiers: h, l, ll, z, j, t, L */
-        if (*ptr == 'h' || *ptr == 'l' || *ptr == 'j' || 
-            *ptr == 'z' || *ptr == 't' || *ptr == 'L') {
+        if (*ptr == 'h' || *ptr == 'l' || *ptr == 'j' || *ptr == 'z' || *ptr == 't' ||
+            *ptr == 'L') {
             /* Handle double character modifiers like 'hh', 'll' */
-            if ((*ptr == 'h' && *(ptr+1) == 'h') || 
-                (*ptr == 'l' && *(ptr+1) == 'l')) {
+            if ((*ptr == 'h' && *(ptr + 1) == 'h') || (*ptr == 'l' && *(ptr + 1) == 'l')) {
                 ptr += 2;
             } else {
                 ptr++;
             }
         }
-        
+
         /* Check if the specifier is allowed */
         if (*ptr == '\0') {
             return SSTR_ERROR_FORMAT; /* Incomplete format specifier */
         }
-        
+
         /* Verify the final conversion specifier */
         if (strchr(SSTR_ALLOWED_SPECIFIERS, *ptr) == NULL) {
             return SSTR_ERROR_FORMAT;
         }
-        
+
         /* Move past this format specifier */
         ptr++;
     }
-    
+
     return SSTR_SUCCESS;
 }
 #endif
