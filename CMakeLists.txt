@@ -99,3 +99,16 @@ install(DIRECTORY include/sstr/
 install(FILES single_include/sstr.h
     DESTINATION include
 )
+
+# CBMC verification target
+find_program(CBMC_EXECUTABLE cbmc QUIET)
+if(CBMC_EXECUTABLE)
+    add_custom_target(verify
+        COMMAND ${CBMC_EXECUTABLE} ${CMAKE_SOURCE_DIR}/src/sstr.c
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running CBMC verification"
+    )
+    message(STATUS "CBMC found: ${CBMC_EXECUTABLE}")
+else()
+    message(STATUS "CBMC not found, verification target not available")
+endif()

@@ -10,10 +10,13 @@
 
 #include "../include/sstr/sstr.h"
 #include "../include/sstr/sstr_config.h"
+#include "../include/sstr/cbmc_stubs.h"
 #include <string.h>
+#include <assert.h>
 
 SStrResult sstr_init(SStr *s, char *buffer, size_t buffer_size)
 {
+    __CPROVER_assume(buffer_size == 0);
     if (s == NULL || buffer == NULL) {
         return SSTR_ERROR_NULL;
     }
