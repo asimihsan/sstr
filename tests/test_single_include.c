@@ -115,11 +115,11 @@ void test_formatting(void)
 int main(void)
 {
     printf("Testing single-include STB-style implementation\n");
-    
+
     test_initialization();
     test_copy_and_append();
     test_formatting();
-    
+
     printf("All single-include tests passed!\n");
     return 0;
 }
