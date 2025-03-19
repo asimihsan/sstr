@@ -61,13 +61,15 @@ EOF
 # Add the configuration content
 echo "Adding configuration from $CONFIG_FILE"
 # Skip first 20 lines (copyright, comments, include guards)
-tail -n +20 "$CONFIG_FILE" | head -n -1 >> "$OUTPUT_FILE"
+# Using a more portable approach than 'head -n -1' which doesn't work on macOS GitHub Actions
+tail -n +20 "$CONFIG_FILE" | sed -e :a -e '$d;N;2,1ba' -e 'P;D' >> "$OUTPUT_FILE"
 
 # Add the header content (function declarations)
 echo "Adding API declarations from $HEADER_FILE"
 # Skip first 20 lines (copyright, comments, include guards)
 # Also skip the includes for sstr_config.h
-awk 'NR>20 && !/sstr_config\.h/' "$HEADER_FILE" | head -n -1 >> "$OUTPUT_FILE"
+# Using a more portable approach than 'head -n -1' which doesn't work on macOS GitHub Actions
+awk 'NR>20 && !/sstr_config\.h/' "$HEADER_FILE" | sed -e :a -e '$d;N;2,1ba' -e 'P;D' >> "$OUTPUT_FILE"
 
 # Add the C++ closing bracket and transition to implementation
 cat >> "$OUTPUT_FILE" << 'EOF'

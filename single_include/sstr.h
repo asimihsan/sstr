@@ -79,7 +79,6 @@ extern "C" {
 #ifndef SSTR_ENABLE_FLOAT_FORMAT
 #define SSTR_ENABLE_FLOAT_FORMAT 1
 #endif
-
 #include <stdarg.h>
 #include <stddef.h>
 
@@ -186,7 +185,6 @@ int sstr_format(SStr *dest, const char *fmt, ...);
  * @return Number of characters written or negative error code
  */
 int sstr_vformat(SStr *dest, const char *fmt, va_list args);
-
 
 #ifdef __cplusplus
 }
