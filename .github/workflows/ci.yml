@@ -11,14 +11,38 @@ jobs:
   build-docker-verification:
     name: Build verification Docker image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     outputs:
-      image-cached: ${{ steps.cache-image.outputs.cache-hit }}
+      image-name: ${{ steps.image-info.outputs.image-name }}
+      image-digest: ${{ steps.build-image.outputs.digest }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
+      - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v2
+
+      - name: Set up Docker image metadata
+        id: image-info
+        run: |
+          # Create a deterministic image name based on the repository
+          repo="${GITHUB_REPOSITORY,,}"  # Convert to lowercase
+          echo "image-name=ghcr.io/${repo}/sstr-verification" >> $GITHUB_OUTPUT
+          # Use SHA for PR builds, 'latest' for main branch pushes
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "image-tag=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "image-tag=latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cache Docker layers
         id: cache-image
@@ -29,22 +53,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-docker-
 
-      - name: Build verification Docker image
+      - name: Build and push Docker image
+        id: build-image
         uses: docker/build-push-action@v4
         with:
           context: .
-          push: false
-          tags: sstr-verification:latest
+          push: true
+          tags: ${{ steps.image-info.outputs.image-name }}:${{ steps.image-info.outputs.image-tag }}
           platforms: linux/amd64
           cache-from: type=local,src=/tmp/docker-cache
           cache-to: type=local,dest=/tmp/docker-cache,mode=max
-          outputs: type=docker,dest=/tmp/sstr-verification.tar
-
-      - name: Upload Docker image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: sstr-verification
-          path: /tmp/sstr-verification.tar
 
   build-and-test:
     runs-on: ubuntu-latest
@@ -100,14 +118,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download Docker image artifact
-        uses: actions/download-artifact@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
         with:
-          name: sstr-verification
-          path: /tmp
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Load Docker image
-        run: docker load --input /tmp/sstr-verification.tar
+      - name: Pull Docker image
+        run: docker pull ${{ needs.build-docker-verification.outputs.image-name }}:${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'latest' }}
+
+      - name: Tag image as expected by make commands
+        run: docker tag ${{ needs.build-docker-verification.outputs.image-name }}:${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'latest' }} sstr-verification:latest
 
       - name: Run CBMC verification
         run: make cbmc-verify
@@ -125,14 +147,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download Docker image artifact
-        uses: actions/download-artifact@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
         with:
-          name: sstr-verification
-          path: /tmp
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Load Docker image
-        run: docker load --input /tmp/sstr-verification.tar
+      - name: Pull Docker image
+        run: docker pull ${{ needs.build-docker-verification.outputs.image-name }}:${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'latest' }}
+
+      - name: Tag image as expected by make commands
+        run: docker tag ${{ needs.build-docker-verification.outputs.image-name }}:${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'latest' }} sstr-verification:latest
 
       - name: Run Valgrind in Docker
         run: make valgrind-verify
