@@ -34,7 +34,7 @@
  * but with a fixed unwinding bound */
 static size_t strlen_test(const char *str) {
     size_t len = 0;
-    
+
     // Use a regular loop for Klee (unlike CBMC, Klee can handle loops well)
     for (size_t i = 0; i < 10; i++) {
         if (str[i] == '\0') {
@@ -42,7 +42,7 @@ static size_t strlen_test(const char *str) {
         }
         len++;
     }
-    
+
     return len;
 }
 
@@ -51,29 +51,29 @@ int main() {
     const size_t DEST_SIZE = 10;
     char dest_buffer[DEST_SIZE];
     SStr dest;
-    
+
     /* Initialize the destination string */
     sstr_init(&dest, dest_buffer, DEST_SIZE);
-    
+
     /* Create a small source string buffer */
     const size_t SRC_SIZE = 10;
     char src_buffer[SRC_SIZE];
-    
+
     /* Make the source buffer symbolic */
     klee_make_symbolic(src_buffer, SRC_SIZE, "src_buffer");
-    
+
     /* Ensure the buffer has a null terminator somewhere */
     size_t null_pos;
     klee_make_symbolic(&null_pos, sizeof(null_pos), "null_pos");
     klee_assume(null_pos < SRC_SIZE);
     src_buffer[null_pos] = '\0';
-    
+
     /* Calculate the actual length using strlen */
     size_t actual_len = strlen_test(src_buffer);
-    
+
     /* Call the function under test */
     SStrResult result = sstr_copy(&dest, src_buffer);
-    
+
     /* Verify post-conditions based on the behavior of sstr_copy */
     if (result == SSTR_SUCCESS) {
         /* The actual length should be either the original string length or the capacity,
@@ -91,7 +91,7 @@ int main() {
                 klee_assert(dest.length == dest.capacity && "Length is set to capacity after truncation");
             }
         }
-        
+
         /* String must be null-terminated */
         klee_assert(dest.data[dest.length] == '\0' && "String is null-terminated after copy");
     } else if (result == SSTR_ERROR_OVERFLOW) {
@@ -99,6 +99,6 @@ int main() {
         klee_assert(SSTR_DEFAULT_POLICY == SSTR_ERROR && "Error returned only with ERROR policy");
         klee_assert(actual_len > dest.capacity && "Overflow error implies string too long");
     }
-    
+
     return 0;
 }

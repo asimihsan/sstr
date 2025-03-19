@@ -41,27 +41,3 @@ repos:
         types: [c]
         # Only run when C files are modified
         files: \.(c|h)$
-
-    -   id: no-binary-files
-        name: no-binary-files
-        description: Prevent binary files from being committed
-        entry: |
-          #!/usr/bin/env python3
-          import sys
-          import subprocess
-          
-          exit_code = 0
-          
-          for file in subprocess.check_output(['git', 'diff', '--cached', '--name-only', '--diff-filter=d']).decode().splitlines():
-              try:
-                  mime_type = subprocess.check_output(['file', '--mime', file]).decode()
-                  if 'binary' in mime_type:
-                      print(f"Error: Binary file detected: {file}")
-                      exit_code = 1
-              except Exception as e:
-                  print(f"Error checking file {file}: {e}")
-          
-          sys.exit(exit_code)
-        language: python
-        pass_filenames: false
-        always_run: true

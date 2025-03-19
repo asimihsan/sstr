@@ -20,25 +20,25 @@ mkdir -p "$BUILD_DIR"
 run_klee() {
     local harness_name="$1"
     echo "Running KLEE verification for $harness_name..."
-    
+
     # Step 1: Compile each source file separately into LLVM bitcode
     echo "Compiling sstr.c..."
     clang -I"$INCLUDE_DIR" -emit-llvm -c $CLANG_FLAGS -o "$BUILD_DIR/sstr.bc" "$SRC_DIR/sstr.c"
-    
+
     echo "Compiling sstr_format.c..."
     clang -I"$INCLUDE_DIR" -emit-llvm -c $CLANG_FLAGS -o "$BUILD_DIR/sstr_format.bc" "$SRC_DIR/sstr_format.c"
-    
+
     echo "Compiling ${harness_name}_harness.c..."
     clang -I"$INCLUDE_DIR" -emit-llvm -c $CLANG_FLAGS -o "$BUILD_DIR/harness.bc" "$KLEE_DIR/${harness_name}_harness.c"
-    
+
     # Step 2: Link the LLVM bitcode files together using llvm-link
     echo "Linking bitcode files..."
     llvm-link "$BUILD_DIR/sstr.bc" "$BUILD_DIR/sstr_format.bc" "$BUILD_DIR/harness.bc" -o "$BUILD_DIR/${harness_name}_klee.bc"
-    
+
     # Step 3: Run KLEE on the linked bitcode file
     echo "Running KLEE..."
     klee "$BUILD_DIR/${harness_name}_klee.bc"
-    
+
     echo "KLEE verification for $harness_name completed."
     echo "----------------------------------------"
 }
