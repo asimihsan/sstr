@@ -24,7 +24,7 @@ jobs:
 
       - name: Run standard tests
         run: make check
-        
+
       - name: Test with format validation enabled (default)
         run: make test_validation
 
@@ -34,7 +34,7 @@ jobs:
           make NO_FORMAT_VALIDATION=1
           make test_validation NO_FORMAT_VALIDATION=1
           ./test_validation
-          
+
       - name: Test with custom allowed specifiers
         run: |
           make clean
@@ -50,7 +50,7 @@ jobs:
           go install github.com/google/addlicense@latest
           make copyright-check
         continue-on-error: true
-        
+
       - name: Verify single-include file is up-to-date
         run: make verify-single-include
 
@@ -59,29 +59,29 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Build and run Valgrind in Docker
         run: |
           docker build -t sstr-valgrind .
           docker run --rm sstr-valgrind
-  
+
   # Optional MacOS build for cross-platform validation
   build-macos:
     runs-on: macos-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        
+
       - name: Install dependencies
         run: |
           brew install cmake
-          
+
       - name: Build
         run: make all
-        
+
       - name: Run standard tests
         run: make check
-        
+
       - name: Test with format validation enabled (default)
         run: make test_validation
 

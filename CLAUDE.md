@@ -50,6 +50,25 @@
   - Substring extraction (sstr_substring)
   - String search (sstr_find)
 
+## Pre-commit Hooks
+
+The repository uses pre-commit to ensure code quality before committing. Set up pre-commit with:
+
+```bash
+# Install pre-commit
+make pre-commit-install
+
+# Run on all files (optional)
+make pre-commit-run
+```
+
+Pre-commit hooks will automatically:
+- Format code using clang-format
+- Check for proper code formatting
+- Prevent binary files from being committed
+- Ensure single-include file is up-to-date
+- Fix end-of-file and trailing whitespace issues
+
 ## Single-Include Workflow
 
 - Use `make single_include` to regenerate the single header file
@@ -86,13 +105,13 @@ void sstr_function_harness() {
     // 1. Setup input structures with fixed bounds
     char buffer[SIZE];
     SStr s;
-    
+
     // 2. Apply constraints to make verification tractable
     __CPROVER_assume(condition);
-    
+
     // 3. Call the function under test
     SStrResult result = sstr_function(...);
-    
+
     // 4. Verify postconditions with assertions
     __CPROVER_assert(property, "Message explaining the property");
 }
@@ -217,3 +236,78 @@ Violated property:
 ```
 
 Use the counterexample to understand why verification failed and fix the issue.
+
+## Docker-based Verification
+
+To enhance portability and consistency across environments, the library can run all verification tools through Docker:
+
+### Building the Docker Image
+
+```
+make build-docker
+```
+
+This builds a Docker image containing CBMC, Klee, and Valgrind, ready for comprehensive verification.
+
+### Docker-based CBMC Verification
+
+Run the following commands to verify the library using CBMC through Docker:
+
+```
+make verify-init     # Verify sstr_init function
+make verify-copy     # Verify sstr_copy function
+make verify-append   # Verify sstr_append function
+make verify          # Run all CBMC verifications
+```
+
+### Docker-based Klee Verification
+
+Klee is a symbolic execution engine that complements CBMC by exploring execution paths:
+
+```
+make klee-prepare         # Set up Klee environment
+make klee-compile-init    # Compile sstr_init for Klee
+make klee-compile-copy    # Compile sstr_copy for Klee
+make klee-compile-append  # Compile sstr_append for Klee
+make klee-run-init        # Run Klee on sstr_init
+make klee-run-copy        # Run Klee on sstr_copy
+make klee-run-append      # Run Klee on sstr_append
+make klee-verify          # Run all Klee verifications
+```
+
+### Docker-based Valgrind Analysis
+
+Valgrind performs runtime memory analysis to detect leaks and memory errors:
+
+```
+make valgrind-docker      # Run tests through Valgrind in Docker
+```
+
+### Combined Verification
+
+For comprehensive verification:
+
+```
+make verify-all        # Run both CBMC and Klee verifications
+make verify-full       # Run all verification tools (CBMC, Klee, and Valgrind)
+```
+
+### Key Differences Between CBMC and Klee
+
+1. **Approach**:
+   - CBMC performs bounded model checking (exhaustive symbolic analysis)
+   - Klee performs symbolic execution (explores execution paths)
+
+2. **Strengths**:
+   - CBMC is better at proving properties hold for all inputs within bounds
+   - Klee excels at finding concrete test cases that trigger issues
+
+3. **Interpreting Results**:
+   - CBMC provides a counterexample when property fails
+   - Klee generates test cases for each execution path explored
+
+4. **Limitations**:
+   - CBMC may suffer from state explosion on complex code
+   - Klee may not explore all paths in large programs
+
+Using both tools provides more comprehensive verification coverage.

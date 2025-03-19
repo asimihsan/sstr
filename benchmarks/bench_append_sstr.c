@@ -20,7 +20,7 @@
 int main(int argc, char *argv[]) {
     char *base_string = "Hello, world!";
     char *append_string = " This is a benchmark for sstr_append performance testing.";
-    
+
     if (argc > 1) {
         base_string = argv[1];
     }

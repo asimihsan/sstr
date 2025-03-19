@@ -25,34 +25,34 @@ A minimal, bounds-checked string handling library designed for embedded systems 
 int main(void) {
     /* Stack-allocated buffer */
     char buffer[64];
-    
+
     /* Initialize an SStr structure with the buffer */
     SStr str;
     SStrResult result = sstr_init(&str, buffer, sizeof(buffer));
-    
+
     if (result != SSTR_SUCCESS) {
         printf("Failed to initialize string\n");
         return 1;
     }
-    
+
     /* Copy a string */
     result = sstr_copy(&str, "Hello, ");
-    
+
     /* Append another string */
     result = sstr_append(&str, "world!");
-    
+
     /* Print the result */
-    printf("Result: %s (length: %zu, capacity: %zu)\n", 
+    printf("Result: %s (length: %zu, capacity: %zu)\n",
            str.data, str.length, str.capacity);
-           
+
     /* Format a string with validation (only certain format specifiers allowed) */
     int chars_written = sstr_format(&str, "The answer is %d", 42);
     if (chars_written < 0) {
         printf("Format error: %d\n", chars_written);
     }
-    
+
     printf("Formatted: %s\n", str.data);
-    
+
     return 0;
 }
 ```
@@ -236,34 +236,34 @@ typedef struct {
 
 #### Initialization and Basic Operations
 
-- `SStrResult sstr_init(SStr *s, char *buffer, size_t buffer_size)`  
+- `SStrResult sstr_init(SStr *s, char *buffer, size_t buffer_size)`
   Initialize a string with a stack buffer
 
-- `SStrResult sstr_clear(SStr *s)`  
+- `SStrResult sstr_clear(SStr *s)`
   Clear a string (set length to zero)
 
 #### String Copy Operations
 
-- `SStrResult sstr_copy(SStr *dest, const char *src)`  
+- `SStrResult sstr_copy(SStr *dest, const char *src)`
   Copy a C string to an SStr
 
-- `SStrResult sstr_copy_n(SStr *dest, const char *src, size_t src_len)`  
+- `SStrResult sstr_copy_n(SStr *dest, const char *src, size_t src_len)`
   Copy a specified number of characters from a C string to an SStr
 
 #### String Append Operations
 
-- `SStrResult sstr_append(SStr *dest, const char *src)`  
+- `SStrResult sstr_append(SStr *dest, const char *src)`
   Append a C string to an SStr
 
-- `SStrResult sstr_append_sstr(SStr *dest, const SStr *src)`  
+- `SStrResult sstr_append_sstr(SStr *dest, const SStr *src)`
   Append one SStr to another
 
 #### Formatting Functions
 
-- `int sstr_format(SStr *dest, const char *fmt, ...)`  
+- `int sstr_format(SStr *dest, const char *fmt, ...)`
   Format a string (printf-style), returns number of characters written or negative error code
 
-- `int sstr_vformat(SStr *dest, const char *fmt, va_list args)`  
+- `int sstr_vformat(SStr *dest, const char *fmt, va_list args)`
   Format with va_list, returns number of characters written or negative error code
 
 ## Configuration Options
@@ -331,6 +331,29 @@ make format
 
 # Check if code is properly formatted (without modifying files)
 make format-check
+```
+
+### Pre-commit Hooks
+
+This project uses [pre-commit](https://pre-commit.com/) to ensure code quality before committing. Pre-commit will automatically:
+
+- Format code using clang-format
+- Check for proper code formatting
+- Prevent binary files from being committed
+- Ensure single-include file is up-to-date
+- Fix end-of-file and trailing whitespace issues
+
+To install pre-commit:
+
+```bash
+# Install pre-commit
+pip install pre-commit
+
+# Install git hooks
+pre-commit install
+
+# Run on all files (optional)
+pre-commit run --all-files
 ```
 
 ### Testing

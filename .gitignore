@@ -14,6 +14,7 @@ build/*
 *.xml
 *.goto
 test_single_include
+docker-cache*
 
 CMakeLists.txt.user
 CMakeCache.txt
@@ -28,3 +29,4 @@ CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
 cmake-build-debug
+.aider*

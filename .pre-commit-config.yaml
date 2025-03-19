@@ -1,0 +1,67 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-added-large-files
+        args: ['--maxkb=100']
+    -   id: detect-private-key
+    -   id: forbid-new-submodules
+    -   id: mixed-line-ending
+        args: ['--fix=lf']
+
+-   repo: local
+    hooks:
+    -   id: clang-format
+        name: clang-format
+        description: Format C/C++ code using clang-format
+        entry: bash -c 'find src include tests examples -name "*.c" -o -name "*.h" | xargs clang-format -i'
+        language: system
+        pass_filenames: false
+        types: [c]
+        # Only run when C files are modified
+        files: \.(c|h)$
+
+    -   id: maintain-single-include
+        name: maintain-single-include
+        description: Ensure single include file is up-to-date
+        entry: ./build_single_include.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+
+    -   id: format-check
+        name: format-check
+        description: Check if code is properly formatted
+        entry: bash -c 'find src include tests examples -name "*.c" -o -name "*.h" | xargs clang-format --dry-run --Werror'
+        language: system
+        pass_filenames: false
+        types: [c]
+        # Only run when C files are modified
+        files: \.(c|h)$
+
+    -   id: no-binary-files
+        name: no-binary-files
+        description: Prevent binary files from being committed
+        entry: |
+          #!/usr/bin/env python3
+          import sys
+          import subprocess
+          
+          exit_code = 0
+          
+          for file in subprocess.check_output(['git', 'diff', '--cached', '--name-only', '--diff-filter=d']).decode().splitlines():
+              try:
+                  mime_type = subprocess.check_output(['file', '--mime', file]).decode()
+                  if 'binary' in mime_type:
+                      print(f"Error: Binary file detected: {file}")
+                      exit_code = 1
+              except Exception as e:
+                  print(f"Error checking file {file}: {e}")
+          
+          sys.exit(exit_code)
+        language: python
+        pass_filenames: false
+        always_run: true

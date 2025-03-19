@@ -45,20 +45,20 @@ target_include_directories(sstr PUBLIC include)
 if(SSTR_BUILD_EXAMPLES)
     add_executable(basic_usage examples/basic_usage.c)
     target_link_libraries(basic_usage sstr)
-    
+
     add_executable(formatting examples/formatting.c)
     target_link_libraries(formatting sstr)
 endif()
 
 # Tests
 if(SSTR_BUILD_TESTS)
-    add_executable(test_runner 
+    add_executable(test_runner
         tests/test_runner.c
         tests/test_core.c
         tests/test_format.c
     )
     target_link_libraries(test_runner sstr)
-    
+
     # Add test
     enable_testing()
     add_test(NAME test_runner COMMAND test_runner)
@@ -69,19 +69,19 @@ if(SSTR_BUILD_BENCHMARKS)
     # Copy benchmark
     add_executable(bench_copy_n benchmarks/bench_copy_n.c)
     target_link_libraries(bench_copy_n sstr)
-    
+
     add_executable(bench_copy_std benchmarks/bench_copy_std.c)
-    
+
     # Append benchmark
     add_executable(bench_append_sstr benchmarks/bench_append_sstr.c)
     target_link_libraries(bench_append_sstr sstr)
-    
+
     add_executable(bench_append_std benchmarks/bench_append_std.c)
-    
+
     # Format benchmark
     add_executable(bench_format_sstr benchmarks/bench_format_sstr.c)
     target_link_libraries(bench_format_sstr sstr)
-    
+
     add_executable(bench_format_std benchmarks/bench_format_std.c)
 endif()
 

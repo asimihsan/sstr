@@ -29,10 +29,10 @@ cat > "$OUTPUT_FILE" << 'EOF'
 
 /**
  * SStr - Safe String Library for Embedded Systems
- * 
+ *
  * A minimal, bounds-checked string handling library designed for embedded systems
  * with no dynamic memory allocation.
- * 
+ *
  * Usage:
  *   1. Include this file in any C file that needs to use SStr
  *   2. In EXACTLY ONE C file, define SSTR_IMPLEMENTATION before including:
@@ -86,7 +86,7 @@ EOF
 # Add each implementation file
 for impl_file in "${IMPLEMENTATION_FILES[@]}"; do
   echo "Adding implementation from $impl_file"
-  
+
   # Extract the function implementations and static helpers
   # Skip includes, copyright, and empty lines at the start
   awk '

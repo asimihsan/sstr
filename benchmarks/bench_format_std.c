@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
     char *format_string = "The answer is %d, and %s is the question.";
     int int_value = 42;
     char *str_value = "life";
-    
+
     if (argc > 1) {
         format_string = argv[1];
     }
