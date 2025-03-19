@@ -38,22 +38,27 @@ EXAMPLES = $(EXAMPLE_SRCS:.c=)
 STATIC_LIB = libsstr.a
 
 # Default target
+.PHONY: all
 all: $(STATIC_LIB) examples tests
 
 # Benchmarks
+.PHONY: benchmarks
 benchmarks:
 	mkdir -p build
 	cd build && cmake .. -DSSTR_BUILD_BENCHMARKS=ON && \
 	make bench_copy_sstr bench_copy_std bench_append_sstr bench_append_std bench_format_sstr bench_format_std
 
+.PHONY: run_benchmarks
 run_benchmarks: benchmarks
 	mise x -- ./run_benchmarks.sh
 
 # Generate the single-include version
+.PHONY: single_include
 single_include:
 	./build_single_include.sh
 
 # Verify the single-include file is up-to-date
+.PHONY: verify-single-include
 verify-single-include: single_include
 	@if git diff --quiet single_include/sstr.h; then \
 		echo "✅ single_include/sstr.h is up-to-date"; \
@@ -72,6 +77,7 @@ $(STATIC_LIB): $(LIB_OBJS)
 	ar rcs $@ $^
 
 # Build all examples
+.PHONY: examples
 examples: $(EXAMPLES)
 
 # Link examples
@@ -79,30 +85,40 @@ examples/%: examples/%.o $(STATIC_LIB)
 	$(CC) $(CFLAGS) $< -L. -lsstr -o examples/$*
 
 # Build test runner
+.PHONY: tests
 tests: test_runner
 
+.PHONY: test_runner
 test_runner: $(TEST_OBJS) $(STATIC_LIB)
 	$(CC) $(CFLAGS) $(TEST_OBJS) -L. -lsstr -o $@
 
 # Validation test
+.PHONY: test_validation
 test_validation: tests/test_validation.c $(STATIC_LIB)
 	$(CC) $(CFLAGS) $(INCLUDES) $< -L. -lsstr -o $@
 
 # Test the single-include STB-style implementation
-test_single_include: tests/test_single_include.c
-	$(CC) $(CFLAGS) $< -o $@
+.PHONY: test_single_include
+test_single_include: single_include
+	$(CC) $(CFLAGS) tests/test_single_include.c -o $@
 
-# Run tests
-check: test_runner test_single_include
+# Run tests - always clean first to ensure consistent builds
+.PHONY: check
+check: clean single_include
+	$(MAKE) $(STATIC_LIB)
+	$(MAKE) test_runner
+	$(MAKE) test_single_include
 	./test_runner
 	./test_single_include
 
 # Clean build files
+.PHONY: clean
 clean:
 	rm -f $(LIB_OBJS) $(TEST_OBJS) $(EXAMPLE_OBJS) $(STATIC_LIB) test_runner test_validation test_single_include $(EXAMPLES)
 
 # Install
 PREFIX ?= /usr/local
+.PHONY: install
 install: $(STATIC_LIB)
 	mkdir -p $(PREFIX)/include/sstr
 	mkdir -p $(PREFIX)/lib
@@ -111,27 +127,33 @@ install: $(STATIC_LIB)
 	cp single_include/sstr.h $(PREFIX)/include/
 
 # Uninstall
+.PHONY: uninstall
 uninstall:
 	rm -rf $(PREFIX)/include/sstr
 	rm -f $(PREFIX)/include/sstr.h
 	rm -f $(PREFIX)/lib/$(STATIC_LIB)
 
+.PHONY: copyright
 copyright:
 	fd -e c -e h | xargs addlicense -f copyright.tmpl -c "Asim Ihsan" -v -s
 
+.PHONY: copyright-check
 copyright-check:
 	fd -e c -e h | xargs addlicense -f copyright.tmpl -c "Asim Ihsan" -v -s -check
 
 # Format code using clang-format
+.PHONY: format
 format:
 	find src include tests examples -name "*.c" -o -name "*.h" | xargs clang-format -i
 
 # Check if code is properly formatted
+.PHONY: format-check
 format-check:
 	find src include tests examples -name "*.c" -o -name "*.h" | xargs clang-format --dry-run --Werror
 
 # Docker build for verification tools
 # Build Docker images for verification
+.PHONY: build-docker
 build-docker:
 	docker buildx build \
 	  --progress=plain \
@@ -141,101 +163,119 @@ build-docker:
 	  .
 
 # Docker runner for CBMC (use native ARM64 for better performance)
+.PHONY: docker-run-cbmc
 docker-run-cbmc:
-	docker run --platform linux/arm64 --rm -v $(shell pwd):/app -w /app sstr-verification $(CMD)
+	docker run --platform $(shell uname -m | grep -q "arm64" && echo "linux/arm64" || echo "linux/amd64") --rm -v $(shell pwd):/app -w /app sstr-verification $(CMD)
 
 # Docker runner for Klee (must use AMD64 as Klee doesn't support ARM64)
+.PHONY: docker-run-klee
 docker-run-klee:
 	docker run --platform linux/amd64 --rm -v $(shell pwd):/app -w /app sstr-verification $(CMD)
 
 # Default Docker runner - use ARM64 for performance when not using Klee
+.PHONY: docker-run
 docker-run:
 	docker run --platform linux/arm64 --rm -v $(shell pwd):/app -w /app sstr-verification $(CMD)
 
 # Test with different format validation configurations
-validation-tests: test_validation test_single_include
+.PHONY: validation-tests
+validation-tests: clean
 	@echo "Testing with format validation enabled (default)..."
+	$(MAKE) clean
+	$(MAKE) single_include
+	$(MAKE) $(STATIC_LIB)
+	$(MAKE) test_validation
+	$(MAKE) test_single_include
 	./test_validation
 	./test_single_include
 	@echo "\nTesting with format validation disabled..."
 	$(MAKE) clean
-	$(MAKE) NO_FORMAT_VALIDATION=1
+	$(MAKE) single_include
+	$(MAKE) NO_FORMAT_VALIDATION=1 $(STATIC_LIB)
 	$(MAKE) test_validation NO_FORMAT_VALIDATION=1
 	$(MAKE) test_single_include NO_FORMAT_VALIDATION=1
 	./test_validation
 	./test_single_include
 	@echo "\nTesting with custom allowed specifiers..."
 	$(MAKE) clean
-	$(MAKE) ALLOWED_SPECIFIERS="ds"
-	$(MAKE) test_validation
+	$(MAKE) single_include
+	$(MAKE) ALLOWED_SPECIFIERS="ds" $(STATIC_LIB)
+	$(MAKE) test_validation ALLOWED_SPECIFIERS="ds"
 	$(MAKE) test_single_include ALLOWED_SPECIFIERS="ds"
 	./test_validation
 	./test_single_include
 
 # Run Valgrind in Docker
+.PHONY: valgrind-verify
 valgrind-verify:
-	$(MAKE) docker-run CMD="bash -c 'make clean && make test_runner && /usr/bin/valgrind --leak-check=full --error-exitcode=1 ./test_runner'"
-
-# CBMC verification targets with bounded loop unwinding and timeout
-# Local CBMC commands (kept for reference)
-cbmc-local-init:
-	cbmc src/sstr.c src/sstr_format.c verification/sstr_init_harness.c --function sstr_init_harness --bounds-check --pointer-check --unwind 10 --unwinding-assertions --stop-on-fail
-
-cbmc-local-copy:
-	cbmc src/sstr.c src/sstr_format.c verification/sstr_copy_harness.c --function sstr_copy_harness --bounds-check --pointer-check --unwind 10 --unwinding-assertions --stop-on-fail --slice-formula
-
-cbmc-local-append:
-	cbmc src/sstr.c src/sstr_format.c verification/sstr_append_harness.c --function sstr_append_harness --bounds-check --pointer-check --unwind 10 --unwinding-assertions --stop-on-fail --slice-formula
+	$(MAKE) docker-run CMD="bash -c 'make clean && make single_include && make test_runner && /usr/bin/valgrind --leak-check=full --error-exitcode=1 ./test_runner'"
 
 # Docker-based CBMC verification targets (use ARM64 for speed)
+.PHONY: cbmc-verify-init
 cbmc-verify-init:
 	$(MAKE) docker-run-cbmc CMD="cbmc src/sstr.c src/sstr_format.c verification/sstr_init_harness.c --function sstr_init_harness --bounds-check --pointer-check --unwind 10 --unwinding-assertions --stop-on-fail"
 
+.PHONY: cbmc-verify-copy
 cbmc-verify-copy:
 	$(MAKE) docker-run-cbmc CMD="cbmc src/sstr.c src/sstr_format.c verification/sstr_copy_harness.c --function sstr_copy_harness --bounds-check --pointer-check --unwind 10 --unwinding-assertions --stop-on-fail --slice-formula"
 
+.PHONY: cbmc-verify-append
 cbmc-verify-append:
 	$(MAKE) docker-run-cbmc CMD="cbmc src/sstr.c src/sstr_format.c verification/sstr_append_harness.c --function sstr_append_harness --bounds-check --pointer-check --unwind 10 --unwinding-assertions --stop-on-fail --slice-formula"
 
 # Show available properties for a function
+.PHONY: cbmc-properties
 cbmc-properties:
 	$(MAKE) docker-run-cbmc CMD="cbmc src/sstr.c src/sstr_format.c --function sstr_init --show-properties"
 
 # Run all CBMC verifications
+.PHONY: cbmc-verify
 cbmc-verify: cbmc-verify-init cbmc-verify-copy cbmc-verify-append
 
 # Klee verification targets (use AMD64 as required by Klee)
 # Klee verification targets using the script (local)
+.PHONY: klee-init
 klee-init:
 	./run_klee.sh sstr_init
 
+.PHONY: klee-copy
 klee-copy:
 	./run_klee.sh sstr_copy
 
+.PHONY: klee-append
 klee-append:
 	./run_klee.sh sstr_append
 
+.PHONY: klee-all
 klee-all:
 	./run_klee.sh
 
 # Klee verification targets (Docker)
+.PHONY: klee-docker-init
 klee-docker-init:
 	$(MAKE) docker-run-klee CMD="./run_klee_docker.sh sstr_init"
 
+.PHONY: klee-docker-copy
 klee-docker-copy:
 	$(MAKE) docker-run-klee CMD="./run_klee_docker.sh sstr_copy"
 
+.PHONY: klee-docker-append
 klee-docker-append:
 	$(MAKE) docker-run-klee CMD="./run_klee_docker.sh sstr_append"
 
+.PHONY: klee-docker-all
 klee-docker-all:
 	$(MAKE) docker-run-klee CMD="./run_klee_docker.sh"
 
 # Top-level verify targets
+.PHONY: klee-verify
 klee-verify: klee-all
+
+.PHONY: klee-verify-docker
 klee-verify-docker: klee-docker-all
 
 # Display KLEE test results in human-readable format
+.PHONY: klee-results
 klee-results:
 	@echo "Displaying KLEE verification results..."
 	@if [ -d "./klee-build" ]; then \
@@ -261,38 +301,29 @@ klee-results:
 	fi
 
 # Docker-based KLEE results
+.PHONY: klee-results-docker
 klee-results-docker:
 	$(MAKE) docker-run-klee CMD="bash -c 'make klee-results'"
 
 # Run all verifications
-verify-all: cbmc-verify klee-verify valgrind-verify
+.PHONY: verify-all
+verify-all: clean cbmc-verify klee-verify valgrind-verify
 
+.PHONY: setup
 setup:
 	mise x -- pre-commit install
 	mise x -- pre-commit autoupdate
 
+.PHONY: pre-commit-run
 pre-commit-run:
 	mise x -- pre-commit run --all-files
 
-# CI targets
-ci-local: all tests check format-check copyright-check validation-tests verify-single-include pre-commit-run
+# CI targets - All Docker-based for consistency across platforms
+.PHONY: ci
+ci: clean single_include verify-single-include format-check copyright-check pre-commit-run
+	$(MAKE) docker-run CMD="make clean && make check"
+	$(MAKE) cbmc-verify
+	$(MAKE) klee-docker-all
+	$(MAKE) valgrind-verify
 
-# CI target that runs all checks (including Docker-based verification)
-ci: ci-local cbmc-verify klee-docker-all valgrind-verify
-
-# Define groups of PHONY targets
-PHONY_MAIN = all clean check examples tests
-PHONY_BUILD = benchmarks run_benchmarks single_include verify-single-include
-PHONY_INSTALL = install uninstall
-PHONY_CODING = copyright copyright-check format format-check
-PHONY_TESTING = valgrind-verify validation-tests test_validation test_single_include ci ci-local
-PHONY_DOCKER = docker-run build-docker docker-run-cbmc docker-run-klee
-PHONY_CBMC = cbmc-verify cbmc-verify-init cbmc-verify-copy cbmc-verify-append cbmc-properties
-PHONY_KLEE = klee-init klee-copy klee-append klee-all \
-            klee-docker-init klee-docker-copy klee-docker-append klee-docker-all \
-            klee-verify klee-verify-docker klee-results klee-results-docker
-PHONY_ALL = verify-all
-
-# Combine all PHONY targets
-.PHONY: $(PHONY_MAIN) $(PHONY_BUILD) $(PHONY_INSTALL) $(PHONY_CODING) \
-        $(PHONY_TESTING) $(PHONY_DOCKER) $(PHONY_CBMC) $(PHONY_KLEE) $(PHONY_ALL)
+# Note: .PHONY declarations have been moved to each target definition
