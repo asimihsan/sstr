@@ -14,6 +14,7 @@
 #include "../include/sstr/sstr.h"
 #include "../include/sstr/sstr_config.h"
 #include "klee/klee.h"
+#include <assert.h>  /* Include to avoid implicit __assert_fail declaration */
 
 int main() {
     /* Declare variables for the function parameters */

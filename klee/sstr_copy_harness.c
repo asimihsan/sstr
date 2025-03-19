@@ -14,6 +14,7 @@
 #include "../include/sstr/sstr.h"
 #include "../include/sstr/sstr_config.h"
 #include <stdlib.h>
+#include <assert.h>  /* Include to avoid implicit __assert_fail declaration */
 
 // Include Klee header for klee_make_symbolic and klee_assume
 #include "klee/klee.h"

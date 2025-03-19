@@ -136,21 +136,21 @@ build-docker:
 	docker buildx build \
 	  --progress=plain \
 	  --load \
-	  -t sstr-verification-arm64 \
+	  -t sstr-verification \
 	  --platform linux/arm64,linux/amd64 \
 	  .
 
 # Docker runner for CBMC (use native ARM64 for better performance)
 docker-run-cbmc:
-	docker run --platform linux/arm64 --rm -v $(shell pwd):/app -w /app sstr-verification-arm64 $(CMD)
+	docker run --platform linux/arm64 --rm -v $(shell pwd):/app -w /app sstr-verification $(CMD)
 
 # Docker runner for Klee (must use AMD64 as Klee doesn't support ARM64)
 docker-run-klee:
-	docker run --platform linux/amd64 --rm -v $(shell pwd):/app -w /app sstr-verification-amd64 $(CMD)
+	docker run --platform linux/amd64 --rm -v $(shell pwd):/app -w /app sstr-verification $(CMD)
 
 # Default Docker runner - use ARM64 for performance when not using Klee
 docker-run:
-	docker run --platform linux/arm64 --rm -v $(shell pwd):/app -w /app sstr-verification-arm64 $(CMD)
+	docker run --platform linux/arm64 --rm -v $(shell pwd):/app -w /app sstr-verification $(CMD)
 
 # Test with different format validation configurations
 validation-tests: test_validation test_single_include
@@ -235,6 +235,35 @@ klee-docker-all:
 klee-verify: klee-all
 klee-verify-docker: klee-docker-all
 
+# Display KLEE test results in human-readable format
+klee-results:
+	@echo "Displaying KLEE verification results..."
+	@if [ -d "./klee-build" ]; then \
+		for dir in ./klee-build/klee-*-out; do \
+			if [ -d "$$dir" ]; then \
+				echo "\n📊 Results for $$(basename $$dir | sed 's/klee-\(.*\)-out/\1/')"; \
+				echo "--------------------------------------------"; \
+				echo "📈 Test statistics:"; \
+				cat "$$dir/info" 2>/dev/null | grep -E "instructions|completed paths|generated tests" || echo "No info file found"; \
+				echo "\n💥 Errors found:"; \
+				if [ -d "$$dir/test-errors" ] && ls "$$dir/test-errors" 2>/dev/null | grep -q "\.err"; then \
+					for err in "$$dir/test-errors"/*.err; do \
+						echo "  - $$(basename $$err | sed 's/\.err//'): $$(cat $$err)"; \
+					done; \
+				else \
+					echo "  ✅ No errors found"; \
+				fi; \
+				echo ""; \
+			fi; \
+		done; \
+	else \
+		echo "❌ KLEE build directory not found. Run klee-verify or klee-verify-docker first."; \
+	fi
+
+# Docker-based KLEE results
+klee-results-docker:
+	$(MAKE) docker-run-klee CMD="bash -c 'make klee-results'"
+
 # Run all verifications
 verify-all: cbmc-verify klee-verify valgrind-verify
 
@@ -245,20 +274,23 @@ setup:
 pre-commit-run:
 	mise x -- pre-commit run --all-files
 
-# CI target that runs all checks
-ci: all tests check format-check copyright-check validation-tests verify-single-include verify-all pre-commit-run
+# CI targets
+ci-local: all tests check format-check copyright-check validation-tests verify-single-include pre-commit-run
+
+# CI target that runs all checks (including Docker-based verification)
+ci: ci-local cbmc-verify klee-docker-all valgrind-verify
 
 # Define groups of PHONY targets
 PHONY_MAIN = all clean check examples tests
 PHONY_BUILD = benchmarks run_benchmarks single_include verify-single-include
 PHONY_INSTALL = install uninstall
 PHONY_CODING = copyright copyright-check format format-check
-PHONY_TESTING = valgrind-verify validation-tests test_validation test_single_include ci
+PHONY_TESTING = valgrind-verify validation-tests test_validation test_single_include ci ci-local
 PHONY_DOCKER = docker-run build-docker docker-run-cbmc docker-run-klee
 PHONY_CBMC = cbmc-verify cbmc-verify-init cbmc-verify-copy cbmc-verify-append cbmc-properties
 PHONY_KLEE = klee-init klee-copy klee-append klee-all \
             klee-docker-init klee-docker-copy klee-docker-append klee-docker-all \
-            klee-verify klee-verify-docker
+            klee-verify klee-verify-docker klee-results klee-results-docker
 PHONY_ALL = verify-all
 
 # Combine all PHONY targets

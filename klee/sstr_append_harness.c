@@ -14,6 +14,7 @@
 #include "../include/sstr/sstr.h"
 #include "../include/sstr/sstr_config.h"
 #include <stdlib.h>
+#include <assert.h>  /* Include to avoid implicit __assert_fail declaration */
 #include "klee/klee.h"
 
 #ifndef SSTR_ERROR

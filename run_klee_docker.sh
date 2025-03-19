@@ -35,7 +35,11 @@ run_klee() {
     echo "Linking bitcode files..."
     llvm-link "$BUILD_DIR/sstr.bc" "$BUILD_DIR/sstr_format.bc" "$BUILD_DIR/harness.bc" -o "$BUILD_DIR/${harness_name}_klee.bc"
 
-    # Step 3: Run KLEE on the linked bitcode file
+    # Step 3: Remove existing output directory if it exists
+    echo "Preparing output directory..."
+    rm -rf "$BUILD_DIR/klee-${harness_name}-out"
+    
+    # Step 4: Run KLEE on the linked bitcode file
     echo "Running KLEE..."
     klee --output-dir="$BUILD_DIR/klee-${harness_name}-out" "$BUILD_DIR/${harness_name}_klee.bc"
 

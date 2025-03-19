@@ -8,6 +8,44 @@ on:
   workflow_dispatch:
 
 jobs:
+  build-docker-verification:
+    name: Build verification Docker image
+    runs-on: ubuntu-latest
+    outputs:
+      image-cached: ${{ steps.cache-image.outputs.cache-hit }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Cache Docker layers
+        id: cache-image
+        uses: actions/cache@v3
+        with:
+          path: /tmp/docker-cache
+          key: ${{ runner.os }}-docker-${{ hashFiles('Dockerfile') }}
+          restore-keys: |
+            ${{ runner.os }}-docker-
+
+      - name: Build verification Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false
+          tags: sstr-verification:latest
+          platforms: linux/amd64
+          cache-from: type=local,src=/tmp/docker-cache
+          cache-to: type=local,dest=/tmp/docker-cache,mode=max
+          outputs: type=docker,dest=/tmp/sstr-verification.tar
+
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sstr-verification
+          path: /tmp/sstr-verification.tar
+
   build-and-test:
     runs-on: ubuntu-latest
     steps:
@@ -54,16 +92,50 @@ jobs:
       - name: Verify single-include file is up-to-date
         run: make verify-single-include
 
-  valgrind:
+  formal-verification:
+    name: Formal verification (CBMC & KLEE)
     runs-on: ubuntu-latest
+    needs: build-docker-verification
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Build and run Valgrind in Docker
-        run: |
-          docker build -t sstr-valgrind .
-          docker run --rm sstr-valgrind
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: sstr-verification
+          path: /tmp
+
+      - name: Load Docker image
+        run: docker load --input /tmp/sstr-verification.tar
+
+      - name: Run CBMC verification
+        run: make cbmc-verify
+
+      - name: Run KLEE verification
+        run: make klee-docker-all
+
+      - name: Display KLEE results
+        run: make klee-results-docker
+
+  valgrind:
+    runs-on: ubuntu-latest
+    needs: build-docker-verification
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: sstr-verification
+          path: /tmp
+
+      - name: Load Docker image
+        run: docker load --input /tmp/sstr-verification.tar
+
+      - name: Run Valgrind in Docker
+        run: make valgrind-verify
 
   # Optional MacOS build for cross-platform validation
   build-macos:

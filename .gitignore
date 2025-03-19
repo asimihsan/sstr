@@ -15,6 +15,7 @@ build/*
 *.goto
 test_single_include
 docker-cache*
+klee-build
 
 CMakeLists.txt.user
 CMakeCache.txt

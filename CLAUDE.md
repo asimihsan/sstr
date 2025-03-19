@@ -260,10 +260,38 @@ make verify-append   # Verify sstr_append function
 make verify          # Run all CBMC verifications
 ```
 
-### Docker-based Klee Verification
+## Klee Symbolic Execution
 
-Klee is a symbolic execution engine that complements CBMC by exploring execution paths:
+### What is Klee?
 
+KLEE is a symbolic execution engine built on LLVM that automatically generates tests to achieve high coverage. Unlike traditional testing that uses specific inputs, KLEE:
+
+- Creates symbolic values representing all possible inputs
+- Explores program paths systematically by solving path constraints
+- Generates concrete test cases for each feasible path
+- Detects real bugs like memory errors and assertion failures
+- Provides deterministic reproduction of discovered issues
+
+### How Klee Works
+
+1. **Symbolic Execution**:
+   - Variables are treated as symbols that can hold any value
+   - KLEE explores paths by forking execution when it encounters branches
+   - Each path maintains a set of constraints on symbolic values
+
+2. **Constraint Solving**:
+   - KLEE uses SMT solvers (like STP or Z3) to:
+     - Determine if a path is feasible based on accumulated constraints
+     - Generate concrete values that satisfy constraints for test cases
+
+3. **Error Detection**:
+   - Memory errors (buffer overflows, use-after-free)
+   - Assertion violations
+   - Division by zero, null pointer dereferences
+
+### Klee Commands for SStr Library
+
+For local execution:
 ```
 make klee-prepare         # Set up Klee environment
 make klee-compile-init    # Compile sstr_init for Klee
@@ -274,6 +302,66 @@ make klee-run-copy        # Run Klee on sstr_copy
 make klee-run-append      # Run Klee on sstr_append
 make klee-verify          # Run all Klee verifications
 ```
+
+For Docker-based execution (preferred for consistent environment):
+```
+make klee-docker-init     # Verify sstr_init with Klee in Docker
+make klee-docker-copy     # Verify sstr_copy with Klee in Docker
+make klee-docker-append   # Verify sstr_append with Klee in Docker
+make klee-docker-all      # Run all Klee verifications in Docker
+```
+
+### Klee-specific Harnesses
+
+Klee harnesses (in the `klee/` directory) are similar to CBMC harnesses but use Klee-specific directives:
+
+- `klee_make_symbolic(&var, sizeof(var), "name")` - Creates symbolic variables
+- `klee_assume(condition)` - Applies path constraints (similar to `__CPROVER_assume`)
+- `klee_assert(condition)` - Verifies properties (similar to `__CPROVER_assert`)
+- `klee_prefer_cex(object, condition)` - Guides test generation
+
+### Interpreting Klee Results
+
+Klee outputs go to `klee-build/klee-[function]-out/` and include:
+
+1. **Test Cases** (`klee-last/test*.ktest`):
+   - Concrete inputs that exercise specific paths
+   - View with: `ktest-tool klee-last/test000001.ktest`
+
+2. **Coverage Information**:
+   - `klee-stats klee-last/` shows path coverage statistics
+   - `klee-replay` can replay test cases to reproduce behavior
+
+3. **Error Reports** (`klee-last/test*.err`):
+   - Detailed error descriptions (memory errors, assertions)
+   - Stack traces showing the execution path to the error
+   - Concrete input values that trigger the error
+
+4. **Execution Tree** (`klee-last/run.istats`):
+   - Visual representation of explored paths
+   - Shows where execution forks and which branches were taken
+
+### Common Klee Issues and Solutions
+
+1. **Path Explosion**:
+   - Limit loop iterations with explicit bounds
+   - Use `klee_assume()` to constrain input ranges
+   - Focus on smaller code units
+
+2. **Memory Consumption**:
+   - Reduce array sizes in harnesses
+   - Use `--max-memory=N` to limit memory usage
+   - Run with `--optimize` to reduce state space
+
+3. **Timeouts**:
+   - Set reasonable timeouts with `--max-time=N`
+   - Split verification into smaller parts
+   - Add more specific constraints to focus exploration
+
+4. **Environment Modeling**:
+   - Provide stubs for external functions
+   - Use symbolic links for file I/O modeling
+   - Set up concrete environment state when needed
 
 ### Docker-based Valgrind Analysis
 
