@@ -167,6 +167,10 @@ build-docker:
 docker-run-cbmc:
 	docker run --platform $(shell uname -m | grep -q "arm64" && echo "linux/arm64" || echo "linux/amd64") --rm -v $(shell pwd):/app -w /app sstr-verification $(CMD)
 
+.PHONY: docker-run-valgrind
+docker-run-valgrind:
+	docker run --platform $(shell uname -m | grep -q "arm64" && echo "linux/arm64" || echo "linux/amd64") --rm -v $(shell pwd):/app -w /app sstr-verification $(CMD)
+
 # Docker runner for Klee (must use AMD64 as Klee doesn't support ARM64)
 .PHONY: docker-run-klee
 docker-run-klee:
@@ -208,7 +212,7 @@ validation-tests: clean
 # Run Valgrind in Docker
 .PHONY: valgrind-verify
 valgrind-verify:
-	$(MAKE) docker-run CMD="bash -c 'make clean && make single_include && make test_runner && /usr/bin/valgrind --leak-check=full --error-exitcode=1 ./test_runner'"
+	$(MAKE) docker-run-valgrind CMD="bash -c 'make clean && make single_include && make test_runner && /usr/bin/valgrind --leak-check=full --error-exitcode=1 ./test_runner'"
 
 # Docker-based CBMC verification targets (use ARM64 for speed)
 .PHONY: cbmc-verify-init
