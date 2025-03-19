@@ -4,6 +4,7 @@ test_runner
 **/*.o
 examples/basic_usage
 examples/formatting
+examples/format_validation
 .devbox
 .idea
 test_validation

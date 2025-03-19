@@ -38,7 +38,7 @@ run_klee() {
     # Step 3: Remove existing output directory if it exists
     echo "Preparing output directory..."
     rm -rf "$BUILD_DIR/klee-${harness_name}-out"
-    
+
     # Step 4: Run KLEE on the linked bitcode file
     echo "Running KLEE..."
     klee --output-dir="$BUILD_DIR/klee-${harness_name}-out" "$BUILD_DIR/${harness_name}_klee.bc"
